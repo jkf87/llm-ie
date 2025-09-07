@@ -1,0 +1,100 @@
+@prefix doc: <http://llm-ie.org/document#> .
+@prefix entity: <http://llm-ie.org/entity#> .
+@prefix llmie: <http://llm-ie.org/ontology#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+entity:0_논문 a llmie:DOCUMENT,
+        llmie:Entity ;
+    rdfs:label "논문"@ko ;
+    llmie:endPosition 24 ;
+    llmie:extractedFrom doc:downloaded_extraction ;
+    llmie:hasFrameId "0" ;
+    llmie:startPosition 22 .
+
+entity:10_성격_프로파일 a llmie:CONCEPT,
+        llmie:Entity ;
+    rdfs:label "성격 프로파일"@ko ;
+    llmie:endPosition 194 ;
+    llmie:extractedFrom doc:downloaded_extraction ;
+    llmie:hasFrameId "10" ;
+    llmie:startPosition 187 .
+
+entity:1_Llama2 a llmie:Entity,
+        llmie:MODEL ;
+    rdfs:label "Llama2"@ko ;
+    llmie:endPosition 32 ;
+    llmie:extractedFrom doc:downloaded_extraction ;
+    llmie:hasFrameId "1" ;
+    llmie:startPosition 26 .
+
+entity:2_GPT4 a llmie:Entity,
+        llmie:MODEL ;
+    rdfs:label "GPT4"@ko ;
+    llmie:endPosition 38 ;
+    llmie:extractedFrom doc:downloaded_extraction ;
+    llmie:hasFrameId "2" ;
+    llmie:startPosition 34 .
+
+entity:3_Mixtral a llmie:Entity,
+        llmie:MODEL ;
+    rdfs:label "Mixtral"@ko ;
+    llmie:endPosition 47 ;
+    llmie:extractedFrom doc:downloaded_extraction ;
+    llmie:hasFrameId "3" ;
+    llmie:startPosition 40 .
+
+entity:4_LLM a llmie:Entity,
+        llmie:TECHNOLOGY_CONCEPT ;
+    rdfs:label "LLM"@ko ;
+    llmie:endPosition 55 ;
+    llmie:extractedFrom doc:downloaded_extraction ;
+    llmie:hasFrameId "4" ;
+    llmie:startPosition 52 .
+
+entity:5_프롬프트 a llmie:Entity,
+        llmie:TECHNOLOGY_PARAMETER ;
+    rdfs:label "프롬프트"@ko ;
+    llmie:endPosition 92 ;
+    llmie:extractedFrom doc:downloaded_extraction ;
+    llmie:hasFrameId "5" ;
+    llmie:startPosition 88 .
+
+entity:6_온도_temperature a llmie:Entity,
+        llmie:TECHNOLOGY_PARAMETER ;
+    rdfs:label "온도(temperature)"@ko ;
+    llmie:endPosition 109 ;
+    llmie:extractedFrom doc:downloaded_extraction ;
+    llmie:hasFrameId "6" ;
+    llmie:startPosition 94 .
+
+entity:7_IPIP-NEO-120_설문지 a llmie:Entity,
+        llmie:SURVEY ;
+    rdfs:label "IPIP-NEO-120 설문지"@ko ;
+    llmie:endPosition 144 ;
+    llmie:extractedFrom doc:downloaded_extraction ;
+    llmie:hasFrameId "7" ;
+    llmie:startPosition 128 .
+
+entity:8_연구 a llmie:Entity,
+        llmie:RESEARCH ;
+    rdfs:label "연구"@ko ;
+    llmie:endPosition 155 ;
+    llmie:extractedFrom doc:downloaded_extraction ;
+    llmie:hasFrameId "8" ;
+    llmie:startPosition 153 .
+
+entity:9_LLM a llmie:Entity,
+        llmie:TECHNOLOGY ;
+    rdfs:label "LLM"@ko ;
+    llmie:endPosition 163 ;
+    llmie:extractedFrom doc:downloaded_extraction ;
+    llmie:hasFrameId "9" ;
+    llmie:startPosition 160 .
+
+doc:downloaded_extraction a llmie:Document ;
+    rdfs:label "downloaded_extraction" ;
+    llmie:createdAt "2025-09-07T15:19:29.305891"^^xsd:dateTime ;
+    llmie:hasText """Moonlight: 네, 맞습니다! 이 논문은 Llama2, GPT4, Mixtral과 같은 LLM들이 어떠한 "성격"을 시뮬레이션하는지, 그리고 그 성격이 프롬프트나 온도(temperature) 설정에 따라 얼마나 안정적인지를 IPIP-NEO-120 설문지를 통해 분석한 연구입니다. LLM이 스스로 응답하는 방식을 통해 "내재된" 성격 프로파일을 파악하려 한 것이죠.
+"""@ko .
+

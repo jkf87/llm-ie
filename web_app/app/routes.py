@@ -18,6 +18,7 @@ from .app_services import (
 )
 from .batch_services import BatchProcessor, split_text_into_chunks
 from .gemini_direct_engine import GeminiDirectBatchProcessor
+from .knowledge_graph_agents import KnowledgeGraphGenerator, KnowledgeGraphValidator
 
 # Data types from your llm_ie library (if needed directly in routes, otherwise services handle them)
 from llm_ie.data_types import LLMInformationExtractionDocument, LLMInformationExtractionFrame
@@ -691,4 +692,278 @@ def api_frame_extraction_gemini_single():
     except Exception as e:
         current_app.logger.error(f"Failed to setup Gemini single extraction: {e}")
         return jsonify({"error": f"Gemini extraction setup failed: {str(e)}"}), 500
+
+
+# ===============================
+# Knowledge Graph API Endpoints
+# ===============================
+
+@main_bp.route('/api/knowledge-graph/generate', methods=['POST'])
+def api_knowledge_graph_generate():
+    """
+    지식그래프 생성 API 엔드포인트
+    LLM-IE 추출 결과로부터 RDF 지식그래프를 생성
+    """
+    try:
+        data = request.json
+        extraction_data = data.get('extraction_data', {})
+        settings = data.get('settings', {})
+        
+        if not extraction_data:
+            return jsonify({"error": "extraction_data is required"}), 400
+        
+        current_app.logger.info("Starting knowledge graph generation")
+        current_app.logger.info(f"Extraction data contains {len(extraction_data.get('frames', []))} frames")
+        
+        # LLM 엔진 설정
+        llm_engine = None
+        if settings.get('enable_llm_inference', False):
+            try:
+                llm_api_type = settings.get('llm_api_type', 'gemini_direct')
+                
+                if llm_api_type == 'gemini_direct':
+                    # Gemini Direct API 사용
+                    api_key = settings.get('gemini_api_key')
+                    if not api_key:
+                        return jsonify({"error": "Gemini API key is required for LLM inference"}), 400
+                    
+                    from .gemini_direct_engine import GeminiDirectConfig, GeminiDirectEngine
+                    config = GeminiDirectConfig(
+                        api_key=api_key,
+                        model='gemini-2.0-flash',
+                        temperature=0.2,
+                        max_output_tokens=4096
+                    )
+                    llm_engine = GeminiDirectEngine(config)
+                else:
+                    # 기존 LLM 엔진 사용
+                    llm_config = {
+                        'api_type': llm_api_type,
+                        'temperature': 0.2,
+                        'max_new_tokens': 4096
+                    }
+                    llm_engine = create_llm_engine_from_config(llm_config)
+                
+                current_app.logger.info(f"LLM engine configured: {llm_api_type}")
+            except Exception as e:
+                current_app.logger.warning(f"Failed to configure LLM engine: {e}")
+                # LLM 없이 진행
+                llm_engine = None
+        
+        # 지식그래프 생성기 초기화
+        kg_generator = KnowledgeGraphGenerator(llm_engine=llm_engine)
+        
+        # 지식그래프 생성
+        result = kg_generator.generate_knowledge_graph(extraction_data)
+        
+        if result['success']:
+            current_app.logger.info(f"Knowledge graph generated successfully with {result['total_triples']} triples")
+        else:
+            current_app.logger.error(f"Knowledge graph generation failed: {result.get('error')}")
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        current_app.logger.error(f"Error in knowledge graph generation API: {e}", exc_info=True)
+        return jsonify({
+            "success": False,
+            "error": f"Knowledge graph generation failed: {str(e)}",
+            "timestamp": time.time()
+        }), 500
+
+
+@main_bp.route('/api/knowledge-graph/validate', methods=['POST'])
+def api_knowledge_graph_validate():
+    """
+    지식그래프 검증 API 엔드포인트
+    생성된 지식그래프의 품질과 일관성을 검증
+    """
+    try:
+        data = request.json
+        kg_data = data.get('kg_data', {})
+        settings = data.get('settings', {})
+        
+        if not kg_data:
+            return jsonify({"error": "kg_data is required"}), 400
+        
+        current_app.logger.info("Starting knowledge graph validation")
+        
+        # LLM 엔진 설정 (검증용)
+        llm_engine = None
+        if settings.get('enable_llm_validation', False):
+            try:
+                llm_api_type = settings.get('llm_api_type', 'gemini_direct')
+                
+                if llm_api_type == 'gemini_direct':
+                    # Gemini Direct API 사용
+                    api_key = settings.get('gemini_api_key')
+                    if not api_key:
+                        return jsonify({"error": "Gemini API key is required for LLM validation"}), 400
+                    
+                    from .gemini_direct_engine import GeminiDirectConfig, GeminiDirectEngine
+                    config = GeminiDirectConfig(
+                        api_key=api_key,
+                        model='gemini-2.0-flash',
+                        temperature=0.1,  # 검증에는 낮은 temperature 사용
+                        max_output_tokens=2048
+                    )
+                    llm_engine = GeminiDirectEngine(config)
+                else:
+                    # 기존 LLM 엔진 사용
+                    llm_config = {
+                        'api_type': llm_api_type,
+                        'temperature': 0.1,
+                        'max_new_tokens': 2048
+                    }
+                    llm_engine = create_llm_engine_from_config(llm_config)
+                
+                current_app.logger.info(f"LLM engine configured for validation: {llm_api_type}")
+            except Exception as e:
+                current_app.logger.warning(f"Failed to configure LLM engine for validation: {e}")
+                # LLM 없이 진행
+                llm_engine = None
+        
+        # 지식그래프 검증기 초기화
+        kg_validator = KnowledgeGraphValidator(llm_engine=llm_engine)
+        
+        # 지식그래프 검증
+        result = kg_validator.validate_knowledge_graph(kg_data)
+        
+        if result['success']:
+            current_app.logger.info(f"Knowledge graph validation completed with score: {result['overall_score']}")
+        else:
+            current_app.logger.error(f"Knowledge graph validation failed: {result.get('error')}")
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        current_app.logger.error(f"Error in knowledge graph validation API: {e}", exc_info=True)
+        return jsonify({
+            "success": False,
+            "error": f"Knowledge graph validation failed: {str(e)}",
+            "timestamp": time.time()
+        }), 500
+
+
+@main_bp.route('/api/knowledge-graph/load-sample', methods=['GET'])
+def api_knowledge_graph_load_sample():
+    """
+    샘플 지식그래프 데이터 로드 (테스트 및 데모 목적)
+    """
+    try:
+        # 샘플 LLM-IE 추출 결과 생성
+        sample_data = {
+            "doc_id": "sample_kg_document",
+            "text": "이 논문은 Llama2, GPT4, Mixtral과 같은 LLM들이 어떠한 \"성격\"을 시뮬레이션하는지, 그리고 그 성격이 프롬프트나 온도(temperature) 설정에 따라 얼마나 안정적인지를 IPIP-NEO-120 설문지를 통해 분석한 연구입니다.",
+            "frames": [
+                {
+                    "frame_id": "0",
+                    "start": 5,
+                    "end": 7,
+                    "entity_text": "논문",
+                    "attr": {"entity_type": "DOCUMENT"}
+                },
+                {
+                    "frame_id": "1",
+                    "start": 9,
+                    "end": 15,
+                    "entity_text": "Llama2",
+                    "attr": {"entity_type": "MODEL"}
+                },
+                {
+                    "frame_id": "2",
+                    "start": 17,
+                    "end": 21,
+                    "entity_text": "GPT4",
+                    "attr": {"entity_type": "MODEL"}
+                },
+                {
+                    "frame_id": "3",
+                    "start": 23,
+                    "end": 30,
+                    "entity_text": "Mixtral",
+                    "attr": {"entity_type": "MODEL"}
+                },
+                {
+                    "frame_id": "4",
+                    "start": 35,
+                    "end": 38,
+                    "entity_text": "LLM",
+                    "attr": {"entity_type": "TECHNOLOGY"}
+                },
+                {
+                    "frame_id": "5",
+                    "start": 71,
+                    "end": 75,
+                    "entity_text": "프롬프트",
+                    "attr": {"entity_type": "TECHNOLOGY_PARAMETER"}
+                },
+                {
+                    "frame_id": "6",
+                    "start": 77,
+                    "end": 92,
+                    "entity_text": "온도(temperature)",
+                    "attr": {"entity_type": "TECHNOLOGY_PARAMETER"}
+                },
+                {
+                    "frame_id": "7",
+                    "start": 111,
+                    "end": 127,
+                    "entity_text": "IPIP-NEO-120 설문지",
+                    "attr": {"entity_type": "SURVEY"}
+                },
+                {
+                    "frame_id": "8",
+                    "start": 136,
+                    "end": 138,
+                    "entity_text": "연구",
+                    "attr": {"entity_type": "RESEARCH"}
+                }
+            ],
+            "relations": [
+                {
+                    "subject": "1",
+                    "relation_type": "IS_TYPE_OF",
+                    "object": "4",
+                    "confidence": 0.95
+                },
+                {
+                    "subject": "2",
+                    "relation_type": "IS_TYPE_OF",
+                    "object": "4",
+                    "confidence": 0.95
+                },
+                {
+                    "subject": "3",
+                    "relation_type": "IS_TYPE_OF",
+                    "object": "4",
+                    "confidence": 0.95
+                },
+                {
+                    "subject": "8",
+                    "relation_type": "STUDIES",
+                    "object": "4",
+                    "confidence": 0.9
+                },
+                {
+                    "subject": "8",
+                    "relation_type": "USES",
+                    "object": "7",
+                    "confidence": 0.85
+                }
+            ]
+        }
+        
+        return jsonify({
+            "success": True,
+            "sample_data": sample_data,
+            "description": "LLM 성격 분석 연구 관련 샘플 데이터"
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Error loading sample knowledge graph data: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
 

@@ -8,8 +8,10 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/prompt_editor.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/frame_extraction.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/result_viewer.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/knowledge_graph.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script src="https://unpkg.com/vis-network@latest/dist/vis-network.min.js"></script>
 
     <style>
         /* Styles for client-side tab functionality */
@@ -46,6 +48,7 @@
                 <li><a href="#prompt-editor" data-tab="promptEditorTabPane" class="tab-nav-link">Prompt Editor</a></li>
                 <li><a href="#frame-extraction" data-tab="frameExtractionTabPane" class="tab-nav-link">Frame Extraction</a></li>
                 <li><a href="#result-viewer" data-tab="resultViewerTabPane" class="tab-nav-link">Result Viewer</a></li>
+                <li><a href="#knowledge-graph" data-tab="knowledgeGraphTabPane" class="tab-nav-link">🕸️ Knowledge Graph</a></li>
             </ul>
         </nav>
     </header>
@@ -62,6 +65,10 @@
         <div id="resultViewerTabPane" class="tab-pane">
             {% include 'result_viewer_content.html' %}
         </div>
+
+        <div id="knowledgeGraphTabPane" class="tab-pane">
+            {% include 'knowledge_graph_content.html' %}
+        </div>
     </main>
 
     <footer>
@@ -71,6 +78,7 @@
     <script src="{{ url_for('static', filename='js/prompt_editor.js') }}"></script>
     <script src="{{ url_for('static', filename='js/frame_extraction.js') }}"></script>
     <script src="{{ url_for('static', filename='js/result_viewer.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/knowledge_graph.js') }}"></script>
 
     <script>
         window.markedReady = false;

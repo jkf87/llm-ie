@@ -4,7 +4,7 @@
     "frames": [
         {
             "frame_id": "0",
-            "start": 22,
+            "start": 22, 
             "end": 24,
             "entity_text": "\ub17c\ubb38",
             "attr": {
