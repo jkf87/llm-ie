@@ -93,7 +93,7 @@ class KnowledgeGraphGenerator:
                 entity_uri = self._create_entity_node(frame, doc_uri)
                 entity_uris[frame['frame_id']] = entity_uri
             
-            # 관계 생성 - 새로운 Multi-Agent 시스템 사용
+            # 관계 생성 - Multi-Agent 시스템 시도하지만 기본 LLM으로 폴백 보장
             if self.llm_engine and use_iterative_inference and IterativeRelationInferenceAgent:
                 try:
                     # Iterative Relation Inference Agent 초기화
@@ -126,21 +126,15 @@ class KnowledgeGraphGenerator:
                         relations.extend(inferred_relations)
                     else:
                         logger.warning(f"Multi-agent relation inference failed: {inference_result.get('error')}")
-                        # 폴백으로 기본 LLM 추론 사용
-                        if frames:  # 엔티티가 있는 경우에만
-                            fallback_relations = self._infer_relations_with_llm(frames, text)
-                            relations.extend(fallback_relations)
-                            
+                        
                 except Exception as e:
                     logger.error(f"Error with multi-agent relation inference: {e}")
-                    # 폴백으로 기본 LLM 추론 사용
-                    if frames:  # 엔티티가 있는 경우에만
-                        fallback_relations = self._infer_relations_with_llm(frames, text)
-                        relations.extend(fallback_relations)
-                        
-            elif self.llm_engine and frames:  # 기본 LLM 추론 폴백
-                inferred_relations = self._infer_relations_with_llm(frames, text)
-                relations.extend(inferred_relations)
+            
+            # 기본 LLM 추론 - Multi-agent 성공 여부와 관계없이 항상 실행하여 관계 보장  
+            if self.llm_engine and frames and len(relations) == 0:  # 관계가 없는 경우에만 기본 LLM 실행
+                logger.info("No relations from multi-agent system, using basic LLM inference as fallback")
+                fallback_relations = self._infer_relations_with_llm(frames, text)
+                relations.extend(fallback_relations)
             
             # 관계 노드들 생성
             logger.info(f"Creating {len(relations)} relations with {len(entity_uris)} entities")
