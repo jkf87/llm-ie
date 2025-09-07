@@ -753,8 +753,22 @@ def api_knowledge_graph_generate():
         # 지식그래프 생성기 초기화
         kg_generator = KnowledgeGraphGenerator(llm_engine=llm_engine)
         
-        # 지식그래프 생성
-        result = kg_generator.generate_knowledge_graph(extraction_data)
+        # Multi-agent 매개변수 추출
+        user_context = settings.get('user_context', '')
+        domain = settings.get('domain', 'general')
+        additional_guidelines = settings.get('additional_guidelines', '')
+        max_relations = settings.get('max_relations', 20)
+        use_iterative_inference = settings.get('use_iterative_inference', True)
+        
+        # 지식그래프 생성 (Multi-agent 시스템 사용)
+        result = kg_generator.generate_knowledge_graph(
+            extraction_data=extraction_data,
+            user_context=user_context,
+            domain=domain,
+            additional_guidelines=additional_guidelines,
+            max_relations=max_relations,
+            use_iterative_inference=use_iterative_inference
+        )
         
         if result['success']:
             current_app.logger.info(f"Knowledge graph generated successfully with {result['total_triples']} triples")
@@ -826,8 +840,11 @@ def api_knowledge_graph_validate():
         # 지식그래프 검증기 초기화
         kg_validator = KnowledgeGraphValidator(llm_engine=llm_engine)
         
-        # 지식그래프 검증
-        result = kg_validator.validate_knowledge_graph(kg_data)
+        # 자동 오류 수정 설정
+        auto_fix_errors = settings.get('auto_fix_errors', True)
+        
+        # 지식그래프 검증 (자동 수정 포함)
+        result = kg_validator.validate_knowledge_graph(kg_data, auto_fix_errors=auto_fix_errors)
         
         if result['success']:
             current_app.logger.info(f"Knowledge graph validation completed with score: {result['overall_score']}")
@@ -965,5 +982,290 @@ def api_knowledge_graph_load_sample():
         return jsonify({
             "success": False,
             "error": str(e)
+        }), 500
+
+
+@main_bp.route('/api/relation-inference/iterative', methods=['POST'])
+def api_relation_inference_iterative():
+    """
+    반복적 관계 추론 API 엔드포인트
+    Multi-agent 시스템을 사용하여 고품질 관계를 추론
+    """
+    try:
+        data = request.json
+        frames = data.get('frames', [])
+        text = data.get('text', '')
+        settings = data.get('settings', {})
+        
+        if not frames or not text:
+            return jsonify({"error": "frames and text are required"}), 400
+        
+        current_app.logger.info(f"Starting iterative relation inference for {len(frames)} entities")
+        
+        # LLM 엔진 설정
+        try:
+            llm_api_type = settings.get('llm_api_type', 'gemini_direct')
+            
+            if llm_api_type == 'gemini_direct':
+                api_key = settings.get('gemini_api_key')
+                if not api_key:
+                    return jsonify({"error": "Gemini API key is required for relation inference"}), 400
+                
+                from .gemini_direct_engine import GeminiDirectConfig, GeminiDirectEngine
+                config = GeminiDirectConfig(
+                    api_key=api_key,
+                    model='gemini-2.0-flash',
+                    temperature=0.3,
+                    max_output_tokens=8192
+                )
+                llm_engine = GeminiDirectEngine(config)
+            else:
+                llm_config = {
+                    'api_type': llm_api_type,
+                    'temperature': 0.3,
+                    'max_new_tokens': 8192
+                }
+                llm_engine = create_llm_engine_from_config(llm_config)
+            
+            current_app.logger.info(f"LLM engine configured for relation inference: {llm_api_type}")
+        except Exception as e:
+            current_app.logger.error(f"Failed to configure LLM engine: {e}")
+            return jsonify({"error": f"LLM configuration failed: {str(e)}"}), 400
+        
+        # IterativeRelationInferenceAgent 사용
+        try:
+            from .relation_agents import IterativeRelationInferenceAgent
+            
+            relation_agent = IterativeRelationInferenceAgent(llm_engine)
+            
+            # 관계 추론 실행
+            result = relation_agent.infer_relations(
+                frames=frames,
+                text=text,
+                user_context=settings.get('user_context', ''),
+                domain=settings.get('domain', 'general'),
+                additional_guidelines=settings.get('additional_guidelines', ''),
+                max_relations=settings.get('max_relations', 20),
+                target_score=settings.get('target_score', 7.5),
+                max_iterations=settings.get('max_iterations', 3)
+            )
+            
+            if result.get('success'):
+                current_app.logger.info(f"Iterative relation inference completed: {len(result.get('relations', []))} relations")
+            else:
+                current_app.logger.error(f"Iterative relation inference failed: {result.get('error')}")
+            
+            return jsonify(result)
+            
+        except ImportError:
+            return jsonify({"error": "IterativeRelationInferenceAgent not available"}), 500
+        except Exception as e:
+            current_app.logger.error(f"Error in iterative relation inference: {e}", exc_info=True)
+            return jsonify({"error": f"Relation inference failed: {str(e)}"}), 500
+        
+    except Exception as e:
+        current_app.logger.error(f"Error in iterative relation inference API: {e}", exc_info=True)
+        return jsonify({
+            "success": False,
+            "error": f"API request failed: {str(e)}"
+        }), 500
+
+
+@main_bp.route('/api/relations/edit', methods=['POST'])
+def api_relations_edit():
+    """
+    관계 편집 API 엔드포인트
+    사용자가 관계를 추가, 수정, 삭제할 수 있는 인터페이스
+    """
+    try:
+        data = request.json
+        action = data.get('action')  # 'create', 'update', 'delete', 'bulk_approve', 'bulk_reject'
+        relation_data = data.get('relation_data', {})
+        relations_list = data.get('relations_list', [])
+        
+        current_app.logger.info(f"Processing relation edit action: {action}")
+        
+        if action == 'create':
+            # 새 관계 생성
+            new_relation = {
+                'id': f"rel_{int(time.time())}",
+                'subject': relation_data.get('subject'),
+                'relation_type': relation_data.get('relation_type'),
+                'object': relation_data.get('object'),
+                'confidence': relation_data.get('confidence', 0.5),
+                'explanation': relation_data.get('explanation', ''),
+                'status': 'approved',  # 사용자가 직접 생성한 관계는 승인됨
+                'created_by': 'user'
+            }
+            
+            return jsonify({
+                'success': True,
+                'action': 'create',
+                'relation': new_relation
+            })
+            
+        elif action == 'update':
+            # 관계 업데이트
+            updated_relation = relation_data.copy()
+            updated_relation['modified_at'] = time.time()
+            
+            return jsonify({
+                'success': True,
+                'action': 'update',
+                'relation': updated_relation
+            })
+            
+        elif action == 'delete':
+            # 관계 삭제
+            relation_id = relation_data.get('id')
+            if not relation_id:
+                return jsonify({"error": "Relation ID is required for deletion"}), 400
+            
+            return jsonify({
+                'success': True,
+                'action': 'delete',
+                'relation_id': relation_id
+            })
+            
+        elif action == 'bulk_approve':
+            # 대량 승인
+            approved_count = 0
+            for relation in relations_list:
+                if relation.get('status') != 'approved':
+                    relation['status'] = 'approved'
+                    relation['modified_at'] = time.time()
+                    approved_count += 1
+            
+            return jsonify({
+                'success': True,
+                'action': 'bulk_approve',
+                'approved_count': approved_count,
+                'relations': relations_list
+            })
+            
+        elif action == 'bulk_reject':
+            # 낮은 점수 관계 대량 거절
+            threshold = relation_data.get('score_threshold', 6.0)
+            rejected_count = 0
+            
+            for relation in relations_list:
+                if relation.get('confidence', 0) * 10 < threshold and relation.get('status') != 'rejected':
+                    relation['status'] = 'rejected'
+                    relation['modified_at'] = time.time()
+                    rejected_count += 1
+            
+            return jsonify({
+                'success': True,
+                'action': 'bulk_reject',
+                'threshold': threshold,
+                'rejected_count': rejected_count,
+                'relations': relations_list
+            })
+            
+        else:
+            return jsonify({"error": f"Unknown action: {action}"}), 400
+        
+    except Exception as e:
+        current_app.logger.error(f"Error in relations edit API: {e}", exc_info=True)
+        return jsonify({
+            "success": False,
+            "error": f"Relation edit failed: {str(e)}"
+        }), 500
+
+
+@main_bp.route('/api/relations/validate-batch', methods=['POST'])
+def api_relations_validate_batch():
+    """
+    관계 일괄 검증 API 엔드포인트
+    LLM을 사용하여 다수의 관계를 한번에 검증
+    """
+    try:
+        data = request.json
+        relations = data.get('relations', [])
+        settings = data.get('settings', {})
+        
+        if not relations:
+            return jsonify({"error": "relations list is required"}), 400
+        
+        current_app.logger.info(f"Starting batch validation for {len(relations)} relations")
+        
+        # LLM 엔진 설정
+        try:
+            llm_api_type = settings.get('llm_api_type', 'gemini_direct')
+            
+            if llm_api_type == 'gemini_direct':
+                api_key = settings.get('gemini_api_key')
+                if not api_key:
+                    return jsonify({"error": "Gemini API key is required for validation"}), 400
+                
+                from .gemini_direct_engine import GeminiDirectConfig, GeminiDirectEngine
+                config = GeminiDirectConfig(
+                    api_key=api_key,
+                    model='gemini-2.0-flash',
+                    temperature=0.1,
+                    max_output_tokens=4096
+                )
+                llm_engine = GeminiDirectEngine(config)
+            else:
+                llm_config = {
+                    'api_type': llm_api_type,
+                    'temperature': 0.1,
+                    'max_new_tokens': 4096
+                }
+                llm_engine = create_llm_engine_from_config(llm_config)
+                
+        except Exception as e:
+            return jsonify({"error": f"LLM configuration failed: {str(e)}"}), 400
+        
+        # RelationEvaluatorAgent 사용
+        try:
+            from .relation_agents import RelationEvaluatorAgent
+            
+            evaluator = RelationEvaluatorAgent(llm_engine)
+            
+            # 관계 일괄 평가
+            validated_relations = []
+            for relation in relations:
+                try:
+                    evaluation_result = evaluator.evaluate_relation(
+                        subject_entity=relation.get('subject_text', ''),
+                        object_entity=relation.get('object_text', ''),
+                        relation_type=relation.get('relation_type'),
+                        context=settings.get('text', ''),
+                        explanation=relation.get('explanation', '')
+                    )
+                    
+                    if evaluation_result.get('success'):
+                        relation['validation_score'] = evaluation_result.get('overall_score', 0)
+                        relation['validation_feedback'] = evaluation_result.get('feedback', '')
+                        relation['validation_suggestions'] = evaluation_result.get('suggestions', [])
+                        relation['validated_at'] = time.time()
+                    else:
+                        relation['validation_error'] = evaluation_result.get('error')
+                    
+                    validated_relations.append(relation)
+                    
+                except Exception as rel_error:
+                    current_app.logger.error(f"Error validating relation {relation.get('id')}: {rel_error}")
+                    relation['validation_error'] = str(rel_error)
+                    validated_relations.append(relation)
+            
+            return jsonify({
+                'success': True,
+                'validated_relations': validated_relations,
+                'total_processed': len(validated_relations)
+            })
+            
+        except ImportError:
+            return jsonify({"error": "RelationEvaluatorAgent not available"}), 500
+        except Exception as e:
+            current_app.logger.error(f"Error in batch validation: {e}", exc_info=True)
+            return jsonify({"error": f"Batch validation failed: {str(e)}"}), 500
+        
+    except Exception as e:
+        current_app.logger.error(f"Error in relations validate batch API: {e}", exc_info=True)
+        return jsonify({
+            "success": False,
+            "error": f"API request failed: {str(e)}"
         }), 500
 

@@ -26,9 +26,9 @@
             <div class="setting-item">
                 <label for="kg-enable-llm-inference">
                     <input type="checkbox" id="kg-enable-llm-inference" checked>
-                    LLM을 사용한 관계 추론
+                    고급 관계 추론 활성화
                 </label>
-                <small>체크하면 LLM이 엔티티 간의 암시적 관계를 추론합니다</small>
+                <small>Multi-Agent 시스템을 사용하여 반복적으로 관계를 개선합니다</small>
             </div>
             <div class="setting-item">
                 <label for="kg-llm-api-select">LLM API 선택:</label>
@@ -41,6 +41,64 @@
             <div class="setting-item" id="kg-gemini-settings">
                 <label for="kg-gemini-api-key">Gemini API Key:</label>
                 <input type="password" id="kg-gemini-api-key" placeholder="AIzaSy..." class="form-control">
+            </div>
+        </div>
+    </div>
+
+    <!-- 관계 추론 컨텍스트 섹션 -->
+    <div class="context-section" id="kg-context-section" style="display: none;">
+        <h4>🎯 관계 추론 컨텍스트</h4>
+        <div class="context-grid">
+            <div class="context-item">
+                <label for="kg-domain-select">문서 도메인:</label>
+                <select id="kg-domain-select" class="form-control">
+                    <option value="research_paper">📚 연구 논문</option>
+                    <option value="technical_document">🔧 기술 문서</option>
+                    <option value="business_document">💼 비즈니스 문서</option>
+                    <option value="general">📄 일반 문서</option>
+                </select>
+                <small>도메인에 따라 적절한 관계 유형이 추천됩니다</small>
+            </div>
+            <div class="context-item full-width">
+                <label for="kg-user-context">사용자 컨텍스트:</label>
+                <textarea id="kg-user-context" class="form-control" rows="3" 
+                    placeholder="문서의 주제, 목적, 특별한 맥락 등을 설명해주세요. 예: '이 논문은 LLM 성격 분석에 관한 연구로, 여러 모델들을 IPIP-NEO-120 설문지로 비교 평가합니다.'"></textarea>
+                <small>이 정보는 더 정확한 관계 추론을 위해 사용됩니다</small>
+            </div>
+            <div class="context-item full-width">
+                <label for="kg-additional-guidelines">추가 가이드라인:</label>
+                <textarea id="kg-additional-guidelines" class="form-control" rows="2"
+                    placeholder="특정 관계 유형을 강조하거나 제외할 내용을 입력하세요. 예: 'MODEL 엔티티들 간에는 COMPARES_WITH 관계를 우선 찾아주세요.'"></textarea>
+                <small>선택사항: 특별한 관계 추론 규칙이나 선호도</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- 관계 추론 설정 -->
+    <div class="inference-settings-section" id="kg-inference-settings" style="display: none;">
+        <h4>⚙️ 추론 매개변수</h4>
+        <div class="inference-grid">
+            <div class="inference-item">
+                <label for="kg-max-relations">최대 관계 수:</label>
+                <input type="number" id="kg-max-relations" value="20" min="5" max="50" class="form-control">
+                <small>추론할 최대 관계 개수</small>
+            </div>
+            <div class="inference-item">
+                <label for="kg-target-score">목표 품질 점수:</label>
+                <input type="number" id="kg-target-score" value="75" min="50" max="95" step="5" class="form-control">
+                <small>이 점수에 도달하면 반복 종료 (100점 만점)</small>
+            </div>
+            <div class="inference-item">
+                <label for="kg-max-iterations">최대 반복 횟수:</label>
+                <input type="number" id="kg-max-iterations" value="3" min="1" max="5" class="form-control">
+                <small>관계 품질 개선을 위한 최대 시도 횟수</small>
+            </div>
+            <div class="inference-item">
+                <label for="kg-enable-relation-review">
+                    <input type="checkbox" id="kg-enable-relation-review">
+                    관계 검토 단계 포함
+                </label>
+                <small>생성된 관계를 사용자가 검토하고 수정할 수 있습니다</small>
             </div>
         </div>
     </div>
@@ -174,6 +232,9 @@
         </div>
     </div>
 </div>
+
+<!-- 관계 편집 모달 포함 -->
+{% include 'relation_editor_modal.html' %}
 
 <!-- 스타일 정의 -->
 <style>

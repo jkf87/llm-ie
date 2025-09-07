@@ -11,6 +11,17 @@ from rdflib.namespace import XSD, FOAF
 import re
 from datetime import datetime
 
+# 관계 추론 에이전트들 import
+try:
+    from .relation_agents import IterativeRelationInferenceAgent
+except ImportError:
+    # 테스트 환경에서는 상대 import가 실패할 수 있음
+    try:
+        from relation_agents import IterativeRelationInferenceAgent
+    except ImportError:
+        IterativeRelationInferenceAgent = None
+        logger.warning("IterativeRelationInferenceAgent not available")
+
 
 logger = logging.getLogger(__name__)
 
@@ -40,12 +51,22 @@ class KnowledgeGraphGenerator:
         self.graph.bind("rdfs", RDFS)
         self.graph.bind("foaf", FOAF)
     
-    def generate_knowledge_graph(self, extraction_data: Dict) -> Dict[str, Any]:
+    def generate_knowledge_graph(self, extraction_data: Dict, 
+                                user_context: str = "",
+                                domain: str = "general", 
+                                additional_guidelines: str = "",
+                                max_relations: int = 20,
+                                use_iterative_inference: bool = True) -> Dict[str, Any]:
         """
-        LLM-IE 추출 결과로부터 지식그래프 생성
+        LLM-IE 추출 결과로부터 지식그래프 생성 (Multi-Agent 시스템 사용)
         
         Args:
             extraction_data: LLM-IE 추출 결과 딕셔너리
+            user_context: 사용자 제공 컨텍스트
+            domain: 문서 도메인 (research_paper, technical_document, business_document, general)
+            additional_guidelines: 추가 가이드라인
+            max_relations: 최대 관계 수
+            use_iterative_inference: 반복적 개선 사용 여부
             
         Returns:
             지식그래프 생성 결과
@@ -72,8 +93,50 @@ class KnowledgeGraphGenerator:
                 entity_uri = self._create_entity_node(frame, doc_uri)
                 entity_uris[frame['frame_id']] = entity_uri
             
-            # 관계 생성 (LLM을 사용하여 암시적 관계 추론)
-            if self.llm_engine:
+            # 관계 생성 - 새로운 Multi-Agent 시스템 사용
+            if self.llm_engine and use_iterative_inference and IterativeRelationInferenceAgent:
+                try:
+                    # Iterative Relation Inference Agent 초기화
+                    relation_agent = IterativeRelationInferenceAgent(self.llm_engine)
+                    
+                    # 관계 추론 실행 - 올바른 메서드명과 매개변수 사용
+                    # 먼저 entities를 올바른 형식으로 변환
+                    entities_for_inference = []
+                    for frame in frames:
+                        entities_for_inference.append({
+                            'id': frame.get('frame_id'),
+                            'text': frame.get('entity_text'),
+                            'type': frame.get('attr', {}).get('entity_type', 'UNKNOWN')
+                        })
+                    
+                    inference_result = relation_agent.infer_relations_iteratively(
+                        text=text,
+                        entities=entities_for_inference,
+                        user_context=user_context,
+                        domain=domain,
+                        additional_guidelines=additional_guidelines,
+                        max_relations=max_relations
+                    )
+                    
+                    if inference_result.get('success'):
+                        inferred_relations = inference_result.get('relations', [])
+                        relations.extend(inferred_relations)
+                        logger.info(f"Multi-agent system inferred {len(inferred_relations)} relations")
+                    else:
+                        logger.warning(f"Multi-agent relation inference failed: {inference_result.get('error')}")
+                        # 폴백으로 기본 LLM 추론 사용
+                        if frames:  # 엔티티가 있는 경우에만
+                            fallback_relations = self._infer_relations_with_llm(frames, text)
+                            relations.extend(fallback_relations)
+                            
+                except Exception as e:
+                    logger.error(f"Error with multi-agent relation inference: {e}")
+                    # 폴백으로 기본 LLM 추론 사용
+                    if frames:  # 엔티티가 있는 경우에만
+                        fallback_relations = self._infer_relations_with_llm(frames, text)
+                        relations.extend(fallback_relations)
+                        
+            elif self.llm_engine and frames:  # 기본 LLM 추론 폴백
                 inferred_relations = self._infer_relations_with_llm(frames, text)
                 relations.extend(inferred_relations)
             
@@ -333,8 +396,8 @@ JSON 형식으로만 응답해주세요.
 
 class KnowledgeGraphValidator:
     """
-    지식그래프 검증을 위한 Sub-agent
-    생성된 지식그래프의 품질과 일관성을 검사
+    지식그래프 검증 및 오류 수정을 위한 Enhanced Sub-agent
+    생성된 지식그래프의 품질과 일관성을 검사하고 오류를 자동 수정
     """
     
     def __init__(self, llm_engine=None):
@@ -346,8 +409,15 @@ class KnowledgeGraphValidator:
             self._check_namespace_usage,
             self._check_data_quality
         ]
+        self.error_fixing_rules = {
+            'basic_structure': self._fix_basic_structure_errors,
+            'entity_consistency': self._fix_entity_consistency_errors,
+            'relation_validity': self._fix_relation_validity_errors,
+            'namespace_usage': self._fix_namespace_usage_errors,
+            'data_quality': self._fix_data_quality_errors
+        }
     
-    def validate_knowledge_graph(self, kg_data: Dict[str, Any]) -> Dict[str, Any]:
+    def validate_knowledge_graph(self, kg_data: Dict[str, Any], auto_fix_errors: bool = True) -> Dict[str, Any]:
         """
         지식그래프 검증 수행
         
@@ -375,10 +445,29 @@ class KnowledgeGraphValidator:
             overall_score = 0
             total_checks = len(self.validation_rules)
             
-            # 각 검증 규칙 실행
+            # 각 검증 규칙 실행 및 오류 수정
+            errors_fixed = []
             for rule in self.validation_rules:
                 try:
                     result = rule(graph, kg_data)
+                    
+                    # 오류 자동 수정 시도
+                    if not result['passed'] and auto_fix_errors:
+                        rule_name = rule.__name__.replace('_check_', '')
+                        if rule_name in self.error_fixing_rules:
+                            try:
+                                fix_result = self.error_fixing_rules[rule_name](graph, result)
+                                if fix_result.get('success'):
+                                    errors_fixed.append({
+                                        'rule': rule_name,
+                                        'fixes_applied': fix_result.get('fixes_applied', []),
+                                        'message': fix_result.get('message')
+                                    })
+                                    # 수정 후 재검증
+                                    result = rule(graph, kg_data)
+                            except Exception as fix_error:
+                                logger.error(f"Error fixing {rule_name}: {fix_error}")
+                    
                     validation_results.append(result)
                     if result['passed']:
                         overall_score += result.get('score', 1)
@@ -399,6 +488,16 @@ class KnowledgeGraphValidator:
             # 최종 점수 계산
             final_score = (overall_score / total_checks) * 100 if total_checks > 0 else 0
             
+            # 수정된 그래프를 다시 직렬화
+            updated_rdf_formats = None
+            if errors_fixed:
+                updated_rdf_formats = {
+                    'turtle': graph.serialize(format='turtle'),
+                    'xml': graph.serialize(format='xml'),
+                    'json-ld': graph.serialize(format='json-ld'),
+                    'n3': graph.serialize(format='n3')
+                }
+            
             return {
                 'success': True,
                 'overall_score': final_score,
@@ -407,6 +506,9 @@ class KnowledgeGraphValidator:
                 'validation_results': validation_results,
                 'llm_validation': llm_validation,
                 'recommendations': self._generate_recommendations(validation_results),
+                'errors_fixed': errors_fixed,
+                'updated_rdf_formats': updated_rdf_formats,
+                'auto_fix_enabled': auto_fix_errors,
                 'timestamp': datetime.now().isoformat()
             }
             
@@ -691,4 +793,201 @@ class KnowledgeGraphValidator:
         if not recommendations:
             recommendations.append("지식그래프가 모든 검증을 통과했습니다! 품질이 우수합니다.")
         
+        # 자동 수정 기능에 대한 추천사항 추가
+        recommendations.append("자동 오류 수정 기능을 사용하여 검출된 문제들을 자동으로 해결할 수 있습니다.")
+        
         return recommendations
+    
+    def _fix_basic_structure_errors(self, graph: Graph, validation_result: Dict) -> Dict:
+        """기본 구조 오류 수정"""
+        LLMIE = Namespace("http://llm-ie.org/ontology#")
+        fixes_applied = []
+        
+        try:
+            details = validation_result.get('details', {})
+            
+            # 엔티티가 없는 경우 기본 엔티티 생성
+            if not details.get('has_entities'):
+                default_entity = self.ENTITY['default_entity']
+                graph.add((default_entity, RDF.type, LLMIE.Entity))
+                graph.add((default_entity, RDFS.label, Literal("Default Entity")))
+                fixes_applied.append("Added default entity")
+            
+            # 문서가 없는 경우 기본 문서 생성
+            if not details.get('has_documents'):
+                default_doc = self.DOC['default_document']
+                graph.add((default_doc, RDF.type, LLMIE.Document))
+                graph.add((default_doc, RDFS.label, Literal("Default Document")))
+                fixes_applied.append("Added default document")
+            
+            return {
+                'success': True,
+                'fixes_applied': fixes_applied,
+                'message': f"Applied {len(fixes_applied)} basic structure fixes"
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    def _fix_entity_consistency_errors(self, graph: Graph, validation_result: Dict) -> Dict:
+        """엔티티 일관성 오류 수정"""
+        LLMIE = Namespace("http://llm-ie.org/ontology#")
+        fixes_applied = []
+        
+        try:
+            entities = list(graph.subjects(RDF.type, LLMIE.Entity))
+            
+            for entity in entities:
+                # 레이블이 없는 엔티티에 기본 레이블 추가
+                labels = list(graph.objects(entity, RDFS.label))
+                if not labels:
+                    entity_id = str(entity).split('#')[-1] if '#' in str(entity) else str(entity).split('/')[-1]
+                    graph.add((entity, RDFS.label, Literal(f"Entity_{entity_id}")))
+                    fixes_applied.append(f"Added label to {entity_id}")
+                
+                # 위치 정보가 없는 엔티티에 기본 위치 추가
+                start_pos = list(graph.objects(entity, LLMIE.startPosition))
+                end_pos = list(graph.objects(entity, LLMIE.endPosition))
+                
+                if not start_pos:
+                    graph.add((entity, LLMIE.startPosition, Literal(0, datatype=XSD.integer)))
+                    fixes_applied.append(f"Added start position to {entity}")
+                
+                if not end_pos:
+                    graph.add((entity, LLMIE.endPosition, Literal(0, datatype=XSD.integer)))
+                    fixes_applied.append(f"Added end position to {entity}")
+            
+            return {
+                'success': True,
+                'fixes_applied': fixes_applied,
+                'message': f"Applied {len(fixes_applied)} entity consistency fixes"
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    def _fix_relation_validity_errors(self, graph: Graph, validation_result: Dict) -> Dict:
+        """관계 유효성 오류 수정"""
+        fixes_applied = []
+        
+        try:
+            statements = list(graph.subjects(RDF.type, RDF.Statement))
+            invalid_statements = []
+            
+            for stmt in statements:
+                subjects = list(graph.objects(stmt, RDF.subject))
+                predicates = list(graph.objects(stmt, RDF.predicate))
+                objects = list(graph.objects(stmt, RDF.object))
+                
+                if not (subjects and predicates and objects):
+                    invalid_statements.append(stmt)
+            
+            # 유효하지 않은 관계 제거
+            for stmt in invalid_statements:
+                # 관련된 모든 트리플 제거
+                for s, p, o in list(graph.triples((stmt, None, None))):
+                    graph.remove((s, p, o))
+                fixes_applied.append(f"Removed invalid relation statement: {stmt}")
+            
+            return {
+                'success': True,
+                'fixes_applied': fixes_applied,
+                'message': f"Applied {len(fixes_applied)} relation validity fixes"
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    def _fix_namespace_usage_errors(self, graph: Graph, validation_result: Dict) -> Dict:
+        """네임스페이스 사용 오류 수정"""
+        fixes_applied = []
+        
+        try:
+            # 기본 네임스페이스 바인딩 추가
+            LLMIE = Namespace("http://llm-ie.org/ontology#")
+            ENTITY = Namespace("http://llm-ie.org/entity#")
+            DOC = Namespace("http://llm-ie.org/document#")
+            
+            graph.bind("llmie", LLMIE)
+            graph.bind("entity", ENTITY)
+            graph.bind("doc", DOC)
+            graph.bind("rdf", RDF)
+            graph.bind("rdfs", RDFS)
+            graph.bind("foaf", FOAF)
+            
+            fixes_applied.append("Added standard namespace bindings")
+            
+            return {
+                'success': True,
+                'fixes_applied': fixes_applied,
+                'message': f"Applied {len(fixes_applied)} namespace usage fixes"
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    def _fix_data_quality_errors(self, graph: Graph, validation_result: Dict) -> Dict:
+        """데이터 품질 오류 수정"""
+        LLMIE = Namespace("http://llm-ie.org/ontology#")
+        fixes_applied = []
+        
+        try:
+            # 빈 레이블 제거
+            empty_labels = []
+            for s, p, o in graph.triples((None, RDFS.label, None)):
+                if not str(o).strip():
+                    empty_labels.append((s, p, o))
+            
+            for triple in empty_labels:
+                graph.remove(triple)
+                fixes_applied.append(f"Removed empty label from {triple[0]}")
+            
+            # 중복 엔티티 제거
+            entities = list(graph.subjects(RDF.type, LLMIE.Entity))
+            entity_signatures = {}
+            duplicates_to_remove = []
+            
+            for entity in entities:
+                labels = list(graph.objects(entity, RDFS.label))
+                start_pos = list(graph.objects(entity, LLMIE.startPosition))
+                end_pos = list(graph.objects(entity, LLMIE.endPosition))
+                
+                if labels and start_pos and end_pos:
+                    signature = (str(labels[0]), str(start_pos[0]), str(end_pos[0]))
+                    if signature in entity_signatures:
+                        # 중복된 엔티티 마크
+                        duplicates_to_remove.append(entity)
+                    else:
+                        entity_signatures[signature] = entity
+            
+            # 중복 엔티티 제거
+            for duplicate in duplicates_to_remove:
+                for s, p, o in list(graph.triples((duplicate, None, None))):
+                    graph.remove((s, p, o))
+                for s, p, o in list(graph.triples((None, None, duplicate))):
+                    graph.remove((s, p, o))
+                fixes_applied.append(f"Removed duplicate entity: {duplicate}")
+            
+            return {
+                'success': True,
+                'fixes_applied': fixes_applied,
+                'message': f"Applied {len(fixes_applied)} data quality fixes"
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }
