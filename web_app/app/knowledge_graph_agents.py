@@ -120,8 +120,10 @@ class KnowledgeGraphGenerator:
                     
                     if inference_result.get('success'):
                         inferred_relations = inference_result.get('relations', [])
-                        relations.extend(inferred_relations)
+                        logger.info(f"Multi-agent inference result keys: {list(inference_result.keys())}")
                         logger.info(f"Multi-agent system inferred {len(inferred_relations)} relations")
+                        logger.debug(f"Relations: {inferred_relations[:3]}...")  # 첫 3개만 로그
+                        relations.extend(inferred_relations)
                     else:
                         logger.warning(f"Multi-agent relation inference failed: {inference_result.get('error')}")
                         # 폴백으로 기본 LLM 추론 사용

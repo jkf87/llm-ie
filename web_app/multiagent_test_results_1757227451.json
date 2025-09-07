@@ -1,0 +1,268 @@
+{
+  "RelationPromptAgent": {
+    "status": "failed",
+    "details": {
+      "success": false,
+      "error": "'id'",
+      "timestamp": "2025-09-07T15:44:11.167515"
+    },
+    "llm_calls": 0
+  },
+  "RelationEvaluatorAgent": {
+    "status": "passed",
+    "details": {
+      "success": true,
+      "overall_score": 0.0,
+      "quality_level": "poor",
+      "relation_scores": [
+        {
+          "score": 0.0,
+          "approved": false,
+          "issues": [
+            "필수 필드 누락: type"
+          ],
+          "criteria_scores": {
+            "text_support": 0.0,
+            "logical_consistency": 0.0,
+            "semantic_accuracy": 0.0,
+            "relevance": 0.0
+          },
+          "relation_index": 0
+        }
+      ],
+      "approved_relations": [],
+      "rejected_relations": [
+        {
+          "relation": {
+            "subject": "entity_1",
+            "relation_type": "USED_IN",
+            "object": "entity_2",
+            "confidence": 0.8,
+            "explanation": "딥러닝이 자연어처리에 사용됩니다"
+          },
+          "rejection_reason": [
+            "필수 필드 누락: type"
+          ]
+        }
+      ],
+      "recommendations": [
+        "전체적인 관계 추론 품질이 낮습니다. 더 구체적인 컨텍스트를 제공하거나 프롬프트를 개선해보세요.",
+        "1개의 관계가 낮은 점수를 받았습니다. 해당 관계들을 검토해보세요."
+      ],
+      "llm_evaluation": {
+        "relevance_score": 8,
+        "accuracy_score": 7,
+        "consistency_score": 9,
+        "specificity_score": 6,
+        "overall_score": 7.5,
+        "feedback": "관계가 대체로 적절하지만 더 구체적인 설명이 필요합니다.",
+        "suggestions": [
+          "관계의 맥락을 더 명확히 설명하세요",
+          "엔티티 간의 직접적 연관성을 강화하세요"
+        ]
+      },
+      "needs_improvement": true,
+      "evaluation_criteria": {
+        "text_support": {
+          "name": "텍스트 근거성",
+          "description": "관계가 원본 텍스트에 의해 뒷받침되는 정도",
+          "weight": 0.3
+        },
+        "logical_consistency": {
+          "name": "논리적 일관성",
+          "description": "관계가 논리적으로 일관되고 모순이 없는 정도",
+          "weight": 0.25
+        },
+        "semantic_accuracy": {
+          "name": "의미적 정확성",
+          "description": "관계 타입이 엔티티 간의 실제 관계를 정확히 표현하는 정도",
+          "weight": 0.25
+        },
+        "relevance": {
+          "name": "관련성",
+          "description": "관계가 문서의 주요 내용과 얼마나 관련이 있는지",
+          "weight": 0.2
+        }
+      },
+      "statistics": {
+        "total_relations": 1,
+        "approved_count": 0,
+        "rejected_count": 1,
+        "approval_rate": 0.0
+      },
+      "timestamp": "2025-09-07T15:44:11.167683"
+    },
+    "score": 0.0
+  },
+  "IterativeRelationInferenceAgent": {
+    "status": "error",
+    "error": "IterativeRelationInferenceAgent.infer_relations_iteratively() got an unexpected keyword argument 'target_score'"
+  },
+  "KnowledgeGraphGenerator": {
+    "status": "passed",
+    "details": {
+      "success": true,
+      "doc_id": "test_doc",
+      "rdf_formats": {
+        "turtle": "@prefix doc: <http://llm-ie.org/document#> .\n@prefix entity: <http://llm-ie.org/entity#> .\n@prefix llmie: <http://llm-ie.org/ontology#> .\n@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n@prefix relation: <http://llm-ie.org/relation#> .\n@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n\nentity:entity_1_딥러닝 a llmie:Entity,\n        llmie:TECHNOLOGY ;\n    rdfs:label \"딥러닝\"@ko ;\n    llmie:endPosition 3 ;\n    llmie:extractedFrom doc:test_doc ;\n    llmie:hasFrameId \"entity_1\" ;\n    llmie:startPosition 0 ;\n    relation:RELATED_TO entity:entity_2_자연어처리 .\n\nentity:entity_3_BERT_모델 a llmie:Entity,\n        llmie:MODEL ;\n    rdfs:label \"BERT 모델\"@ko ;\n    llmie:endPosition 27 ;\n    llmie:extractedFrom doc:test_doc ;\n    llmie:hasFrameId \"entity_3\" ;\n    llmie:startPosition 20 .\n\ndoc:test_doc a llmie:Document ;\n    rdfs:label \"test_doc\" ;\n    llmie:createdAt \"2025-09-07T15:44:11.181118\"^^xsd:dateTime ;\n    llmie:hasText \"딥러닝을 활용한 자연어처리 연구에서 BERT 모델을 사용하여 텍스트 분류 성능을 향상시켰습니다.\"@ko .\n\nentity:entity_2_자연어처리 a llmie:Entity,\n        llmie:FIELD ;\n    rdfs:label \"자연어처리\"@ko ;\n    llmie:endPosition 15 ;\n    llmie:extractedFrom doc:test_doc ;\n    llmie:hasFrameId \"entity_2\" ;\n    llmie:startPosition 10 ;\n    relation:RELATED_TO entity:entity_3_BERT_모델 .\n\n[] a rdf:Statement ;\n    llmie:hasConfidence \"0.9\"^^xsd:float ;\n    rdf:object entity:entity_3_BERT_모델 ;\n    rdf:predicate relation:RELATED_TO ;\n    rdf:subject entity:entity_2_자연어처리 .\n\n[] a rdf:Statement ;\n    llmie:hasConfidence \"0.85\"^^xsd:float ;\n    rdf:object entity:entity_2_자연어처리 ;\n    rdf:predicate relation:RELATED_TO ;\n    rdf:subject entity:entity_1_딥러닝 .\n\n",
+        "xml": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<rdf:RDF\n   xmlns:llmie=\"http://llm-ie.org/ontology#\"\n   xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"\n   xmlns:rdfs=\"http://www.w3.org/2000/01/rdf-schema#\"\n   xmlns:relation=\"http://llm-ie.org/relation#\"\n>\n  <rdf:Description rdf:nodeID=\"Nb4462be91d434293a024a40801ce670d\">\n    <rdf:type rdf:resource=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement\"/>\n    <rdf:subject rdf:resource=\"http://llm-ie.org/entity#entity_1_딥러닝\"/>\n    <rdf:predicate rdf:resource=\"http://llm-ie.org/relation#RELATED_TO\"/>\n    <rdf:object rdf:resource=\"http://llm-ie.org/entity#entity_2_자연어처리\"/>\n    <llmie:hasConfidence rdf:datatype=\"http://www.w3.org/2001/XMLSchema#float\">0.85</llmie:hasConfidence>\n  </rdf:Description>\n  <rdf:Description rdf:nodeID=\"N1574ce3f6a974037bf25f8959ba4f75e\">\n    <rdf:type rdf:resource=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement\"/>\n    <rdf:subject rdf:resource=\"http://llm-ie.org/entity#entity_2_자연어처리\"/>\n    <rdf:predicate rdf:resource=\"http://llm-ie.org/relation#RELATED_TO\"/>\n    <rdf:object rdf:resource=\"http://llm-ie.org/entity#entity_3_BERT_모델\"/>\n    <llmie:hasConfidence rdf:datatype=\"http://www.w3.org/2001/XMLSchema#float\">0.9</llmie:hasConfidence>\n  </rdf:Description>\n  <rdf:Description rdf:about=\"http://llm-ie.org/entity#entity_3_BERT_모델\">\n    <rdf:type rdf:resource=\"http://llm-ie.org/ontology#MODEL\"/>\n    <rdf:type rdf:resource=\"http://llm-ie.org/ontology#Entity\"/>\n    <rdfs:label xml:lang=\"ko\">BERT 모델</rdfs:label>\n    <llmie:hasFrameId>entity_3</llmie:hasFrameId>\n    <llmie:startPosition rdf:datatype=\"http://www.w3.org/2001/XMLSchema#integer\">20</llmie:startPosition>\n    <llmie:endPosition rdf:datatype=\"http://www.w3.org/2001/XMLSchema#integer\">27</llmie:endPosition>\n    <llmie:extractedFrom rdf:resource=\"http://llm-ie.org/document#test_doc\"/>\n  </rdf:Description>\n  <rdf:Description rdf:about=\"http://llm-ie.org/entity#entity_1_딥러닝\">\n    <rdf:type rdf:resource=\"http://llm-ie.org/ontology#TECHNOLOGY\"/>\n    <rdf:type rdf:resource=\"http://llm-ie.org/ontology#Entity\"/>\n    <rdfs:label xml:lang=\"ko\">딥러닝</rdfs:label>\n    <llmie:hasFrameId>entity_1</llmie:hasFrameId>\n    <llmie:startPosition rdf:datatype=\"http://www.w3.org/2001/XMLSchema#integer\">0</llmie:startPosition>\n    <llmie:endPosition rdf:datatype=\"http://www.w3.org/2001/XMLSchema#integer\">3</llmie:endPosition>\n    <llmie:extractedFrom rdf:resource=\"http://llm-ie.org/document#test_doc\"/>\n    <relation:RELATED_TO rdf:resource=\"http://llm-ie.org/entity#entity_2_자연어처리\"/>\n  </rdf:Description>\n  <rdf:Description rdf:about=\"http://llm-ie.org/document#test_doc\">\n    <rdf:type rdf:resource=\"http://llm-ie.org/ontology#Document\"/>\n    <rdfs:label>test_doc</rdfs:label>\n    <llmie:hasText xml:lang=\"ko\">딥러닝을 활용한 자연어처리 연구에서 BERT 모델을 사용하여 텍스트 분류 성능을 향상시켰습니다.</llmie:hasText>\n    <llmie:createdAt rdf:datatype=\"http://www.w3.org/2001/XMLSchema#dateTime\">2025-09-07T15:44:11.181118</llmie:createdAt>\n  </rdf:Description>\n  <rdf:Description rdf:about=\"http://llm-ie.org/entity#entity_2_자연어처리\">\n    <rdf:type rdf:resource=\"http://llm-ie.org/ontology#FIELD\"/>\n    <rdf:type rdf:resource=\"http://llm-ie.org/ontology#Entity\"/>\n    <rdfs:label xml:lang=\"ko\">자연어처리</rdfs:label>\n    <llmie:hasFrameId>entity_2</llmie:hasFrameId>\n    <llmie:startPosition rdf:datatype=\"http://www.w3.org/2001/XMLSchema#integer\">10</llmie:startPosition>\n    <llmie:endPosition rdf:datatype=\"http://www.w3.org/2001/XMLSchema#integer\">15</llmie:endPosition>\n    <llmie:extractedFrom rdf:resource=\"http://llm-ie.org/document#test_doc\"/>\n    <relation:RELATED_TO rdf:resource=\"http://llm-ie.org/entity#entity_3_BERT_모델\"/>\n  </rdf:Description>\n</rdf:RDF>\n",
+        "json-ld": "[\n  {\n    \"@id\": \"http://llm-ie.org/entity#entity_2_자연어처리\",\n    \"@type\": [\n      \"http://llm-ie.org/ontology#FIELD\",\n      \"http://llm-ie.org/ontology#Entity\"\n    ],\n    \"http://llm-ie.org/ontology#endPosition\": [\n      {\n        \"@type\": \"http://www.w3.org/2001/XMLSchema#integer\",\n        \"@value\": 15\n      }\n    ],\n    \"http://llm-ie.org/ontology#extractedFrom\": [\n      {\n        \"@id\": \"http://llm-ie.org/document#test_doc\"\n      }\n    ],\n    \"http://llm-ie.org/ontology#hasFrameId\": [\n      {\n        \"@value\": \"entity_2\"\n      }\n    ],\n    \"http://llm-ie.org/ontology#startPosition\": [\n      {\n        \"@type\": \"http://www.w3.org/2001/XMLSchema#integer\",\n        \"@value\": 10\n      }\n    ],\n    \"http://llm-ie.org/relation#RELATED_TO\": [\n      {\n        \"@id\": \"http://llm-ie.org/entity#entity_3_BERT_모델\"\n      }\n    ],\n    \"http://www.w3.org/2000/01/rdf-schema#label\": [\n      {\n        \"@language\": \"ko\",\n        \"@value\": \"자연어처리\"\n      }\n    ]\n  },\n  {\n    \"@id\": \"http://llm-ie.org/document#test_doc\",\n    \"@type\": [\n      \"http://llm-ie.org/ontology#Document\"\n    ],\n    \"http://llm-ie.org/ontology#createdAt\": [\n      {\n        \"@type\": \"http://www.w3.org/2001/XMLSchema#dateTime\",\n        \"@value\": \"2025-09-07T15:44:11.181118\"\n      }\n    ],\n    \"http://llm-ie.org/ontology#hasText\": [\n      {\n        \"@language\": \"ko\",\n        \"@value\": \"딥러닝을 활용한 자연어처리 연구에서 BERT 모델을 사용하여 텍스트 분류 성능을 향상시켰습니다.\"\n      }\n    ],\n    \"http://www.w3.org/2000/01/rdf-schema#label\": [\n      {\n        \"@value\": \"test_doc\"\n      }\n    ]\n  },\n  {\n    \"@id\": \"http://llm-ie.org/entity#entity_1_딥러닝\",\n    \"@type\": [\n      \"http://llm-ie.org/ontology#TECHNOLOGY\",\n      \"http://llm-ie.org/ontology#Entity\"\n    ],\n    \"http://llm-ie.org/ontology#endPosition\": [\n      {\n        \"@type\": \"http://www.w3.org/2001/XMLSchema#integer\",\n        \"@value\": 3\n      }\n    ],\n    \"http://llm-ie.org/ontology#extractedFrom\": [\n      {\n        \"@id\": \"http://llm-ie.org/document#test_doc\"\n      }\n    ],\n    \"http://llm-ie.org/ontology#hasFrameId\": [\n      {\n        \"@value\": \"entity_1\"\n      }\n    ],\n    \"http://llm-ie.org/ontology#startPosition\": [\n      {\n        \"@type\": \"http://www.w3.org/2001/XMLSchema#integer\",\n        \"@value\": 0\n      }\n    ],\n    \"http://llm-ie.org/relation#RELATED_TO\": [\n      {\n        \"@id\": \"http://llm-ie.org/entity#entity_2_자연어처리\"\n      }\n    ],\n    \"http://www.w3.org/2000/01/rdf-schema#label\": [\n      {\n        \"@language\": \"ko\",\n        \"@value\": \"딥러닝\"\n      }\n    ]\n  },\n  {\n    \"@id\": \"_:Nb4462be91d434293a024a40801ce670d\",\n    \"@type\": [\n      \"http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement\"\n    ],\n    \"http://llm-ie.org/ontology#hasConfidence\": [\n      {\n        \"@type\": \"http://www.w3.org/2001/XMLSchema#float\",\n        \"@value\": \"0.85\"\n      }\n    ],\n    \"http://www.w3.org/1999/02/22-rdf-syntax-ns#object\": [\n      {\n        \"@id\": \"http://llm-ie.org/entity#entity_2_자연어처리\"\n      }\n    ],\n    \"http://www.w3.org/1999/02/22-rdf-syntax-ns#predicate\": [\n      {\n        \"@id\": \"http://llm-ie.org/relation#RELATED_TO\"\n      }\n    ],\n    \"http://www.w3.org/1999/02/22-rdf-syntax-ns#subject\": [\n      {\n        \"@id\": \"http://llm-ie.org/entity#entity_1_딥러닝\"\n      }\n    ]\n  },\n  {\n    \"@id\": \"http://llm-ie.org/entity#entity_3_BERT_모델\",\n    \"@type\": [\n      \"http://llm-ie.org/ontology#MODEL\",\n      \"http://llm-ie.org/ontology#Entity\"\n    ],\n    \"http://llm-ie.org/ontology#endPosition\": [\n      {\n        \"@type\": \"http://www.w3.org/2001/XMLSchema#integer\",\n        \"@value\": 27\n      }\n    ],\n    \"http://llm-ie.org/ontology#extractedFrom\": [\n      {\n        \"@id\": \"http://llm-ie.org/document#test_doc\"\n      }\n    ],\n    \"http://llm-ie.org/ontology#hasFrameId\": [\n      {\n        \"@value\": \"entity_3\"\n      }\n    ],\n    \"http://llm-ie.org/ontology#startPosition\": [\n      {\n        \"@type\": \"http://www.w3.org/2001/XMLSchema#integer\",\n        \"@value\": 20\n      }\n    ],\n    \"http://www.w3.org/2000/01/rdf-schema#label\": [\n      {\n        \"@language\": \"ko\",\n        \"@value\": \"BERT 모델\"\n      }\n    ]\n  },\n  {\n    \"@id\": \"_:N1574ce3f6a974037bf25f8959ba4f75e\",\n    \"@type\": [\n      \"http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement\"\n    ],\n    \"http://llm-ie.org/ontology#hasConfidence\": [\n      {\n        \"@type\": \"http://www.w3.org/2001/XMLSchema#float\",\n        \"@value\": \"0.9\"\n      }\n    ],\n    \"http://www.w3.org/1999/02/22-rdf-syntax-ns#object\": [\n      {\n        \"@id\": \"http://llm-ie.org/entity#entity_3_BERT_모델\"\n      }\n    ],\n    \"http://www.w3.org/1999/02/22-rdf-syntax-ns#predicate\": [\n      {\n        \"@id\": \"http://llm-ie.org/relation#RELATED_TO\"\n      }\n    ],\n    \"http://www.w3.org/1999/02/22-rdf-syntax-ns#subject\": [\n      {\n        \"@id\": \"http://llm-ie.org/entity#entity_2_자연어처리\"\n      }\n    ]\n  }\n]",
+        "n3": "@prefix doc: <http://llm-ie.org/document#> .\n@prefix entity: <http://llm-ie.org/entity#> .\n@prefix llmie: <http://llm-ie.org/ontology#> .\n@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n@prefix relation: <http://llm-ie.org/relation#> .\n@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n\nentity:entity_1_딥러닝 a llmie:Entity,\n        llmie:TECHNOLOGY ;\n    rdfs:label \"딥러닝\"@ko ;\n    llmie:endPosition 3 ;\n    llmie:extractedFrom doc:test_doc ;\n    llmie:hasFrameId \"entity_1\" ;\n    llmie:startPosition 0 ;\n    relation:RELATED_TO entity:entity_2_자연어처리 .\n\nentity:entity_3_BERT_모델 a llmie:Entity,\n        llmie:MODEL ;\n    rdfs:label \"BERT 모델\"@ko ;\n    llmie:endPosition 27 ;\n    llmie:extractedFrom doc:test_doc ;\n    llmie:hasFrameId \"entity_3\" ;\n    llmie:startPosition 20 .\n\ndoc:test_doc a llmie:Document ;\n    rdfs:label \"test_doc\" ;\n    llmie:createdAt \"2025-09-07T15:44:11.181118\"^^xsd:dateTime ;\n    llmie:hasText \"딥러닝을 활용한 자연어처리 연구에서 BERT 모델을 사용하여 텍스트 분류 성능을 향상시켰습니다.\"@ko .\n\nentity:entity_2_자연어처리 a llmie:Entity,\n        llmie:FIELD ;\n    rdfs:label \"자연어처리\"@ko ;\n    llmie:endPosition 15 ;\n    llmie:extractedFrom doc:test_doc ;\n    llmie:hasFrameId \"entity_2\" ;\n    llmie:startPosition 10 ;\n    relation:RELATED_TO entity:entity_3_BERT_모델 .\n\n[] a rdf:Statement ;\n    llmie:hasConfidence \"0.9\"^^xsd:float ;\n    rdf:object entity:entity_3_BERT_모델 ;\n    rdf:predicate relation:RELATED_TO ;\n    rdf:subject entity:entity_2_자연어처리 .\n\n[] a rdf:Statement ;\n    llmie:hasConfidence \"0.85\"^^xsd:float ;\n    rdf:object entity:entity_2_자연어처리 ;\n    rdf:predicate relation:RELATED_TO ;\n    rdf:subject entity:entity_1_딥러닝 .\n\n"
+      },
+      "statistics": {
+        "total_triples": 37,
+        "total_entities": 3,
+        "total_documents": 1,
+        "total_relations": 2,
+        "entity_types": {
+          "TECHNOLOGY": 1,
+          "FIELD": 1,
+          "MODEL": 1
+        }
+      },
+      "visualization_data": {
+        "nodes": [
+          {
+            "id": "http://llm-ie.org/entity#entity_1_딥러닝",
+            "label": "딥러닝",
+            "type": "TECHNOLOGY",
+            "group": "TECHNOLOGY"
+          },
+          {
+            "id": "http://llm-ie.org/entity#entity_2_자연어처리",
+            "label": "자연어처리",
+            "type": "FIELD",
+            "group": "FIELD"
+          },
+          {
+            "id": "http://llm-ie.org/entity#entity_3_BERT_모델",
+            "label": "BERT 모델",
+            "type": "MODEL",
+            "group": "MODEL"
+          }
+        ],
+        "edges": [
+          {
+            "from": "http://llm-ie.org/entity#entity_1_딥러닝",
+            "to": "http://llm-ie.org/entity#entity_2_자연어처리",
+            "label": "RELATED_TO",
+            "confidence": 0.85
+          },
+          {
+            "from": "http://llm-ie.org/entity#entity_2_자연어처리",
+            "to": "http://llm-ie.org/entity#entity_3_BERT_모델",
+            "label": "RELATED_TO",
+            "confidence": 0.9
+          }
+        ]
+      },
+      "timestamp": "2025-09-07T15:44:11.186792",
+      "total_triples": 37
+    },
+    "triples_count": 37,
+    "has_rdf_formats": true
+  },
+  "KnowledgeGraphValidator": {
+    "status": "passed",
+    "details": {
+      "success": true,
+      "overall_score": 100.0,
+      "total_checks": 5,
+      "passed_checks": 5,
+      "validation_results": [
+        {
+          "rule": "basic_structure",
+          "passed": true,
+          "score": 1.0,
+          "message": "Basic RDF structure is valid",
+          "details": {
+            "has_entities": true,
+            "has_documents": true,
+            "has_labels": true
+          }
+        },
+        {
+          "rule": "entity_consistency",
+          "passed": true,
+          "score": 1.0,
+          "message": "All entities are consistent",
+          "details": {
+            "inconsistencies": []
+          }
+        },
+        {
+          "rule": "relation_validity",
+          "passed": true,
+          "score": 1.0,
+          "message": "All relations are valid",
+          "details": {
+            "invalid_relations": []
+          }
+        },
+        {
+          "rule": "namespace_usage",
+          "passed": true,
+          "score": 1.0,
+          "message": "All expected namespaces are used",
+          "details": {
+            "expected_namespaces": [
+              "http://llm-ie.org/ontology#",
+              "http://llm-ie.org/entity#",
+              "http://llm-ie.org/document#"
+            ],
+            "used_namespaces": [
+              "http://www.w3.org/2000/01/rdf-schema#",
+              "http://llm-ie.org/relation#",
+              "http://llm-ie.org/document#",
+              "http://llm-ie.org/entity#",
+              "http://llm-ie.org/ontology#",
+              "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+            ],
+            "missing_namespaces": []
+          }
+        },
+        {
+          "rule": "data_quality",
+          "passed": true,
+          "score": 1.0,
+          "message": "No data quality issues found",
+          "details": {
+            "issues": []
+          }
+        }
+      ],
+      "llm_validation": {
+        "relevance_score": 8,
+        "accuracy_score": 7,
+        "consistency_score": 9,
+        "specificity_score": 6,
+        "overall_score": 7.5,
+        "feedback": "관계가 대체로 적절하지만 더 구체적인 설명이 필요합니다.",
+        "suggestions": [
+          "관계의 맥락을 더 명확히 설명하세요",
+          "엔티티 간의 직접적 연관성을 강화하세요"
+        ]
+      },
+      "recommendations": [
+        "지식그래프가 모든 검증을 통과했습니다! 품질이 우수합니다.",
+        "자동 오류 수정 기능을 사용하여 검출된 문제들을 자동으로 해결할 수 있습니다."
+      ],
+      "errors_fixed": [],
+      "updated_rdf_formats": null,
+      "auto_fix_enabled": true,
+      "timestamp": "2025-09-07T15:44:11.190122"
+    },
+    "overall_score": 100.0,
+    "errors_fixed": 0,
+    "auto_fix_enabled": true
+  },
+  "API_Integration": {
+    "status": "passed",
+    "details": "API endpoints imported successfully",
+    "endpoints_tested": [
+      "/api/relation-inference/iterative",
+      "/api/relations/edit",
+      "/api/relations/validate-batch"
+    ]
+  }
+}

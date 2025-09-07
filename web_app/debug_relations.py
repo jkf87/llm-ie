@@ -17,33 +17,67 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 logger = logging.getLogger(__name__)
 
 class MockLLMEngine:
-    def chat_completion(self, messages, stream=False):
-        # 실제 관계 데이터 반환
-        relations_response = [
-            {
-                "subject": "entity_1",
-                "relation_type": "USES",
-                "object": "entity_2", 
-                "confidence": 0.85,
-                "explanation": "딥러닝이 자연어처리에 사용됩니다."
-            },
-            {
-                "subject": "entity_2",
-                "relation_type": "IMPLEMENTS",
-                "object": "entity_3",
-                "confidence": 0.9,
-                "explanation": "자연어처리가 BERT 모델을 구현합니다."
-            },
-            {
-                "subject": "entity_1",
-                "relation_type": "RELATED_TO",
-                "object": "entity_3",
-                "confidence": 0.75,
-                "explanation": "딥러닝과 BERT 모델은 관련이 있습니다."
-            }
-        ]
+    def __init__(self):
+        self.call_count = 0
         
-        yield {'type': 'content', 'text': json.dumps(relations_response, ensure_ascii=False)}
+    def chat_completion(self, messages, stream=False):
+        self.call_count += 1
+        
+        # 메시지 내용에 따라 다른 응답 생성
+        last_message = messages[-1]['content'] if messages else ''
+        
+        if 'prompt improvement' in last_message.lower() or '프롬프트 개선' in last_message:
+            # RelationPromptAgent용 응답
+            response = {
+                "success": True,
+                "improved_prompt": "다음 텍스트에서 엔티티들 간의 의미적 관계를 분석하세요...",
+                "improvements_made": ["도메인 특화 지침 추가", "관계 유형 명확화"],
+                "domain_guidelines": ["학술 논문에서는 STUDIES, ANALYZES 관계가 중요"]
+            }
+            yield {'type': 'content', 'text': json.dumps(response, ensure_ascii=False)}
+            
+        elif 'evaluate' in last_message.lower() or '평가' in last_message:
+            # RelationEvaluatorAgent용 응답
+            response = {
+                "relevance_score": 8,
+                "accuracy_score": 7,
+                "consistency_score": 9,
+                "specificity_score": 6,
+                "overall_score": 7.5,
+                "feedback": "관계가 대체로 적절합니다.",
+                "suggestions": ["관계의 맥락을 더 명확히 설명하세요"]
+            }
+            yield {'type': 'content', 'text': json.dumps(response, ensure_ascii=False)}
+            
+        else:
+            # 관계 추론용 응답 (IterativeRelationInferenceAgent 파서가 기대하는 형식)
+            relations_response = [
+                {
+                    "subject": "entity_1",
+                    "relation_type": "USES",
+                    "object": "entity_2", 
+                    "confidence": 0.85,
+                    "explanation": "딥러닝이 자연어처리에 사용됩니다."
+                },
+                {
+                    "subject": "entity_2",
+                    "relation_type": "IMPLEMENTS",
+                    "object": "entity_3",
+                    "confidence": 0.9,
+                    "explanation": "자연어처리가 BERT 모델을 구현합니다."
+                },
+                {
+                    "subject": "entity_1",
+                    "relation_type": "RELATED_TO",
+                    "object": "entity_3",
+                    "confidence": 0.75,
+                    "explanation": "딥러닝과 BERT 모델은 관련이 있습니다."
+                }
+            ]
+            
+            # 파서가 기대하는 형식으로 JSON 블록 포함
+            response_text = f"다음은 분석된 관계들입니다:\n\n```json\n{json.dumps(relations_response, ensure_ascii=False, indent=2)}\n```"
+            yield {'type': 'content', 'text': response_text}
 
 
 def test_relation_creation():
@@ -92,12 +126,12 @@ def test_relation_creation():
         mock_engine = MockLLMEngine()
         generator = KnowledgeGraphGenerator(llm_engine=mock_engine)
         
-        print("1. 지식그래프 생성 시작...")
+        print("1. 지식그래프 생성 시작 (Multi-agent 활성화)...")
         result = generator.generate_knowledge_graph(
             extraction_data=extraction_data,
             user_context='디버그 테스트',
             domain='research_paper',
-            use_iterative_inference=False  # 기본 LLM만 사용
+            use_iterative_inference=True  # Multi-agent 시스템 사용
         )
         
         print(f"2. 생성 결과: {result.get('success')}")

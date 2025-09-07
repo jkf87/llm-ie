@@ -458,9 +458,13 @@ class RelationEvaluatorAgent:
                                  entities: List[Dict], user_context: str) -> Dict[str, Any]:
         """개별 관계 평가"""
         
-        # 필수 필드 검증
-        required_fields = ['subject', 'type', 'object']
+        # 필수 필드 검증 (relation_type 또는 type 키 허용)
+        required_fields = ['subject', 'object']
+        relation_type_present = 'relation_type' in relation or 'type' in relation
+        
         missing_fields = [field for field in required_fields if field not in relation]
+        if not relation_type_present:
+            missing_fields.append('relation_type or type')
         
         if missing_fields:
             return {
@@ -469,6 +473,10 @@ class RelationEvaluatorAgent:
                 'issues': [f"필수 필드 누락: {', '.join(missing_fields)}"],
                 'criteria_scores': {criterion: 0.0 for criterion in self.evaluation_criteria}
             }
+        
+        # 관계 유형 정규화 (relation_type 키로 통일)
+        if 'type' in relation and 'relation_type' not in relation:
+            relation['relation_type'] = relation['type']
         
         # 엔티티 존재 검증
         entity_ids = [e['id'] for e in entities]
@@ -866,7 +874,8 @@ class IterativeRelationInferenceAgent:
                 
                 return {
                     'success': True,
-                    'final_relations': final_relations,
+                    'relations': final_relations,  # KnowledgeGraphGenerator가 기대하는 키
+                    'final_relations': final_relations,  # 호환성을 위해 유지
                     'best_iteration': best_result['iteration'],
                     'best_score': best_score,
                     'total_iterations': len(iteration_results),
@@ -922,9 +931,15 @@ class IterativeRelationInferenceAgent:
             entity_ids = [e['id'] for e in entities]
             
             for relation in relations:
+                # 관계 유형 키를 유연하게 처리 (type 또는 relation_type)
+                relation_type_key = 'relation_type' if 'relation_type' in relation else 'type'
+                
                 if (isinstance(relation, dict) and 
-                    'subject' in relation and 'type' in relation and 'object' in relation and
+                    'subject' in relation and relation_type_key in relation and 'object' in relation and
                     relation['subject'] in entity_ids and relation['object'] in entity_ids):
+                    # relation_type 키로 통일
+                    if 'type' in relation and 'relation_type' not in relation:
+                        relation['relation_type'] = relation['type']
                     valid_relations.append(relation)
             
             logger.info(f"Successfully parsed {len(valid_relations)} valid relations from LLM response")
