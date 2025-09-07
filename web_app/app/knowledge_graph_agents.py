@@ -141,7 +141,9 @@ class KnowledgeGraphGenerator:
                 relations.extend(inferred_relations)
             
             # 관계 노드들 생성
-            for relation in relations:
+            logger.info(f"Creating {len(relations)} relations with {len(entity_uris)} entities")
+            for i, relation in enumerate(relations):
+                logger.debug(f"Processing relation {i+1}: {relation}")
                 self._create_relation_node(relation, entity_uris)
             
             # RDF 직렬화
@@ -231,10 +233,14 @@ class KnowledgeGraphGenerator:
     
     def _create_relation_node(self, relation: Dict, entity_uris: Dict[str, URIRef]):
         """관계 노드 생성"""
-        relation_type = relation.get('type', 'RELATED_TO')
+        # 다양한 관계 데이터 형식 지원
+        relation_type = relation.get('relation_type') or relation.get('type', 'RELATED_TO')
         subject_id = relation.get('subject', '')
         object_id = relation.get('object', '')
         confidence = relation.get('confidence', 1.0)
+        
+        logger.debug(f"Creating relation: {subject_id} --{relation_type}--> {object_id}")
+        logger.debug(f"Available entity URIs: {list(entity_uris.keys())}")
         
         if subject_id in entity_uris and object_id in entity_uris:
             subject_uri = entity_uris[subject_id]
@@ -245,6 +251,7 @@ class KnowledgeGraphGenerator:
             
             # 관계 트리플 추가
             self.graph.add((subject_uri, relation_predicate, object_uri))
+            logger.info(f"Added relation: {subject_id} --{relation_type}--> {object_id}")
             
             # 관계에 대한 메타데이터 (reification 사용)
             relation_node = BNode()
@@ -253,6 +260,8 @@ class KnowledgeGraphGenerator:
             self.graph.add((relation_node, RDF.predicate, relation_predicate))
             self.graph.add((relation_node, RDF.object, object_uri))
             self.graph.add((relation_node, self.LLMIE.hasConfidence, Literal(confidence, datatype=XSD.float)))
+        else:
+            logger.warning(f"Skipping relation - missing entities: subject='{subject_id}' in URIs: {subject_id in entity_uris}, object='{object_id}' in URIs: {object_id in entity_uris}")
     
     def _infer_relations_with_llm(self, frames: List[Dict], text: str) -> List[Dict]:
         """LLM을 사용하여 암시적 관계 추론"""
