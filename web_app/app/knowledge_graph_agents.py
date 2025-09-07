@@ -22,6 +22,17 @@ except ImportError:
         IterativeRelationInferenceAgent = None
         logger.warning("IterativeRelationInferenceAgent not available")
 
+# 엔티티 해결 에이전트 import
+try:
+    from .entity_resolution_agents import EntityResolutionAgent
+except ImportError:
+    # 테스트 환경에서는 상대 import가 실패할 수 있음
+    try:
+        from entity_resolution_agents import EntityResolutionAgent
+    except ImportError:
+        EntityResolutionAgent = None
+        logger.warning("EntityResolutionAgent not available")
+
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +67,8 @@ class KnowledgeGraphGenerator:
                                 domain: str = "general", 
                                 additional_guidelines: str = "",
                                 max_relations: int = 20,
-                                use_iterative_inference: bool = True) -> Dict[str, Any]:
+                                use_iterative_inference: bool = True,
+                                enable_entity_resolution: bool = True) -> Dict[str, Any]:
         """
         LLM-IE 추출 결과로부터 지식그래프 생성 (Multi-Agent 시스템 사용)
         
@@ -67,6 +79,7 @@ class KnowledgeGraphGenerator:
             additional_guidelines: 추가 가이드라인
             max_relations: 최대 관계 수
             use_iterative_inference: 반복적 개선 사용 여부
+            enable_entity_resolution: 엔티티 해결 사용 여부
             
         Returns:
             지식그래프 생성 결과
@@ -87,11 +100,79 @@ class KnowledgeGraphGenerator:
             # 문서 노드 생성
             doc_uri = self._create_document_node(doc_id, text)
             
-            # 엔티티 노드들 생성
+            # 엔티티 해결 단계 (Entity Resolution)
+            resolved_entities = frames  # 기본값
+            entity_mapping = {}  # 원본 frame_id -> 해결된 entity_id 매핑
+            
+            if enable_entity_resolution and EntityResolutionAgent and frames:
+                try:
+                    logger.info(f"Running entity resolution on {len(frames)} entities")
+                    resolution_agent = EntityResolutionAgent()
+                    
+                    # 엔티티들을 해결 에이전트가 요구하는 형식으로 변환
+                    entities_for_resolution = []
+                    for frame in frames:
+                        entities_for_resolution.append({
+                            'id': frame['frame_id'],
+                            'text': frame.get('entity_text', ''),
+                            'type': frame.get('attr', {}).get('entity_type', 'UNKNOWN'),
+                            'start': frame.get('start'),
+                            'end': frame.get('end'),
+                            'attributes': frame.get('attr', {})
+                        })
+                    
+                    # 엔티티 해결 실행
+                    resolution_result = resolution_agent.resolve_entities(
+                        entities_for_resolution,
+                        resolution_config={
+                            'similarity_threshold': 0.8,
+                            'use_fuzzy_matching': True,
+                            'use_semantic_similarity': False,  # LLM 엔진 없음
+                            'merge_strategy': 'keep_first'
+                        }
+                    )
+                    
+                    if resolution_result.get('success'):
+                        # EntityResolutionAgent returns 'merged_entities', convert to resolved format
+                        merged_entities = resolution_result.get('merged_entities', [])
+                        entity_mapping = resolution_result.get('entity_mapping', {})
+                        
+                        # Convert merged entities back to frame-like format
+                        resolved_entities = []
+                        for merged_entity in merged_entities:
+                            # Create a frame-like entity from merged entity
+                            resolved_entity = {
+                                'id': merged_entity['merged_id'],
+                                'text': merged_entity['canonical_text'],
+                                'type': merged_entity['entity_type'],
+                                'attributes': {
+                                    'entity_type': merged_entity['entity_type'],
+                                    'confidence': merged_entity.get('confidence', 1.0),
+                                    'source_entities': merged_entity.get('source_entities', []),
+                                    'merge_reasoning': merged_entity.get('merge_reasoning', '')
+                                }
+                            }
+                            resolved_entities.append(resolved_entity)
+                        
+                        logger.info(f"Entity resolution: {len(frames)} -> {len(resolved_entities)} entities")
+                        logger.info(f"Merged entities: {len(merged_entities)}")
+                    else:
+                        logger.warning(f"Entity resolution failed: {resolution_result.get('error')}")
+                        
+                except Exception as e:
+                    logger.error(f"Error during entity resolution: {e}")
+            
+            # 해결된 엔티티 노드들 생성
             entity_uris = {}
-            for frame in frames:
-                entity_uri = self._create_entity_node(frame, doc_uri)
-                entity_uris[frame['frame_id']] = entity_uri
+            for entity in resolved_entities:
+                entity_uri = self._create_entity_node(entity, doc_uri)
+                entity_id = entity.get('id', entity.get('frame_id'))
+                entity_uris[entity_id] = entity_uri
+                
+            # 원본 frame_id들에 대한 매핑도 생성 (관계 생성 시 필요)
+            for original_id, resolved_id in entity_mapping.items():
+                if resolved_id in entity_uris:
+                    entity_uris[original_id] = entity_uris[resolved_id]
             
             # 관계 생성 - Multi-Agent 시스템 시도하지만 기본 LLM으로 폴백 보장
             if self.llm_engine and use_iterative_inference and IterativeRelationInferenceAgent:
@@ -163,7 +244,8 @@ class KnowledgeGraphGenerator:
                 'statistics': stats,
                 'visualization_data': viz_data,
                 'timestamp': datetime.now().isoformat(),
-                'total_triples': len(self.graph)
+                'total_triples': len(self.graph),
+                'total_entities': stats.get('total_entities', 0)
             }
             
         except Exception as e:
@@ -196,18 +278,19 @@ class KnowledgeGraphGenerator:
         return doc_uri
     
     def _create_entity_node(self, frame: Dict, doc_uri: URIRef) -> URIRef:
-        """엔티티 노드 생성"""
-        entity_text = frame.get('entity_text', '')
-        frame_id = frame.get('frame_id', '')
+        """엔티티 노드 생성 (frame 또는 resolved entity 형식 모두 지원)"""
+        # frame 또는 resolved entity 형식 모두 지원
+        entity_text = frame.get('entity_text', frame.get('text', ''))
+        frame_id = frame.get('frame_id', frame.get('id', ''))
         start = frame.get('start', 0)
         end = frame.get('end', 0)
-        attributes = frame.get('attr', {})
+        attributes = frame.get('attr', frame.get('attributes', {}))
         
         # 엔티티 URI 생성
         entity_uri = self.ENTITY[self._sanitize_uri(f"{frame_id}_{entity_text}")]
         
-        # 엔티티 타입 결정
-        entity_type = attributes.get('entity_type', 'UNKNOWN')
+        # 엔티티 타입 결정 (frame 또는 resolved entity 형식 지원)
+        entity_type = attributes.get('entity_type', frame.get('type', 'UNKNOWN'))
         entity_class = self.LLMIE[entity_type]
         
         # 기본 트리플 추가

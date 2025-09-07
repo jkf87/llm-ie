@@ -759,6 +759,7 @@ def api_knowledge_graph_generate():
         additional_guidelines = settings.get('additional_guidelines', '')
         max_relations = settings.get('max_relations', 20)
         use_iterative_inference = settings.get('use_iterative_inference', True)
+        enable_entity_resolution = settings.get('enable_entity_resolution', True)
         
         # 지식그래프 생성 (Multi-agent 시스템 사용)
         result = kg_generator.generate_knowledge_graph(
@@ -767,7 +768,8 @@ def api_knowledge_graph_generate():
             domain=domain,
             additional_guidelines=additional_guidelines,
             max_relations=max_relations,
-            use_iterative_inference=use_iterative_inference
+            use_iterative_inference=use_iterative_inference,
+            enable_entity_resolution=enable_entity_resolution
         )
         
         if result['success']:
