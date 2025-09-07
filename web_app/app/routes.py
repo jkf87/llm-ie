@@ -3,6 +3,7 @@
 
 import os
 import json
+import time
 import tempfile
 import traceback
 from flask import (
@@ -15,6 +16,8 @@ from .app_services import (
     create_llm_engine_from_config,
     get_app_frame_extractor
 )
+from .batch_services import BatchProcessor, split_text_into_chunks
+from .gemini_direct_engine import GeminiDirectBatchProcessor
 
 # Data types from your llm_ie library (if needed directly in routes, otherwise services handle them)
 from llm_ie.data_types import LLMInformationExtractionDocument, LLMInformationExtractionFrame
@@ -24,6 +27,7 @@ from llm_ie.extractors import DirectFrameExtractor # For PromptEditor type hint
 
 # LLM API Options to pass to the template (could also be managed in app/__init__.py)
 LLM_API_OPTIONS = [
+    {"value": "gemini_direct", "name": "Gemini Direct API (Recommended)"},
     {"value": "openai_compatible", "name": "OpenAI Compatible"},
     {"value": "ollama", "name": "Ollama"},
     {"value": "huggingface_hub", "name": "HuggingFace Hub"},
@@ -347,4 +351,344 @@ def api_results_render():
     except Exception as e:
         current_app.logger.error(f"Error in /api/results/render: {e}", exc_info=True)
         return jsonify({"error": f"Failed to render visualization: {str(e)}"}), 500
+
+
+@main_bp.route('/api/frame-extraction/batch', methods=['POST'])
+def api_frame_extraction_batch():
+    """
+    배치 처리를 위한 엔드포인트 - 여러 API 키와 청크 기반 처리
+    """
+    data = request.json
+    input_text = data.get('inputText', '')
+    llm_config_from_request = data.get('llmConfig', {})
+    extractor_config_req = data.get('extractorConfig', {})
+    batch_config = data.get('batchConfig', {})
+    
+    # 배치 설정 파라미터
+    api_keys = batch_config.get('apiKeys', [])  # 여러 API 키 리스트
+    chunk_size = int(batch_config.get('chunkSize', 1000))
+    overlap_size = int(batch_config.get('overlapSize', 100))
+    batch_size = int(batch_config.get('batchSize', 5))
+    delay_between_batches = float(batch_config.get('delayBetweenBatches', 2.0))
+    
+    if not input_text:
+        return jsonify({"error": "Input text is required"}), 400
+    if not extractor_config_req.get('prompt_template'):
+        return jsonify({"error": "Prompt template is required in extractorConfig"}), 400
+    if not llm_config_from_request or not llm_config_from_request.get('api_type'):
+        return jsonify({"error": "LLM API configuration ('api_type') is missing"}), 400
+    if not api_keys or len(api_keys) == 0:
+        return jsonify({"error": "At least one API key is required in batchConfig.apiKeys"}), 400
+    
+    try:
+        # 텍스트를 청크로 분할
+        text_chunks = split_text_into_chunks(input_text, chunk_size, overlap_size)
+        current_app.logger.info(f"Split text into {len(text_chunks)} chunks (size: {chunk_size}, overlap: {overlap_size})")
+        
+        # 배치 프로세서 초기화
+        batch_processor = BatchProcessor(llm_config_from_request, api_keys)
+        
+        def generate_batch_stream():
+            try:
+                stream_generator = batch_processor.process_chunks_batch(
+                    text_chunks=text_chunks,
+                    extractor_config=extractor_config_req,
+                    batch_size=batch_size,
+                    delay_between_batches=delay_between_batches
+                )
+                
+                all_results = []
+                for event in stream_generator:
+                    # 스트리밍으로 진행상황 전송
+                    yield f"data: {json.dumps(event)}\n\n"
+                    
+                    # 완료된 청크 결과 수집
+                    if event.get('type') == 'chunk_complete':
+                        all_results.append(event['data'])
+                    elif event.get('type') == 'processing_complete':
+                        # 전체 처리 완료 이벤트 전송
+                        final_event = {
+                            'type': 'batch_processing_complete',
+                            'data': {
+                                'total_chunks_processed': len(all_results),
+                                'all_results': all_results,
+                                'api_key_usage': event['data'].get('api_key_usage', {})
+                            }
+                        }
+                        yield f"data: {json.dumps(final_event)}\n\n"
+                        
+            except Exception as e:
+                current_app.logger.error(f"Error during batch processing: {e}\n{traceback.format_exc()}")
+                error_payload = {'type': 'batch_error', 'message': f'Batch processing failed: {type(e).__name__} - {str(e)}'}
+                yield f"data: {json.dumps(error_payload)}\n\n"
+            finally:
+                yield "event: end\ndata: {}\n\n"
+        
+        return Response(stream_with_context(generate_batch_stream()), mimetype='text/event-stream')
+        
+    except Exception as e:
+        current_app.logger.error(f"Failed to setup batch processing: {e}")
+        return jsonify({"error": f"Batch processing setup failed: {str(e)}"}), 500
+
+
+@main_bp.route('/api/frame-extraction/gemini-batch', methods=['POST'])
+def api_frame_extraction_gemini_batch():
+    """
+    Gemini 직접 호출을 사용한 배치 처리 엔드포인트
+    """
+    data = request.json
+    input_text = data.get('inputText', '')
+    prompt_template = data.get('promptTemplate', '')
+    batch_config = data.get('batchConfig', {})
+    
+    # 배치 설정 파라미터
+    api_keys = batch_config.get('apiKeys', [])
+    chunk_size = int(batch_config.get('chunkSize', 1000))
+    overlap_size = int(batch_config.get('overlapSize', 100))
+    batch_size = int(batch_config.get('batchSize', 5))
+    delay_between_batches = float(batch_config.get('delayBetweenBatches', 2.0))
+    gemini_model = batch_config.get('geminiModel', 'gemini-2.0-flash')
+    temperature = float(batch_config.get('temperature', 0.2))
+    max_tokens = int(batch_config.get('maxTokens', 4096))
+    
+    if not input_text:
+        return jsonify({"error": "Input text is required"}), 400
+    if not prompt_template:
+        return jsonify({"error": "Prompt template is required"}), 400
+    if not api_keys or len(api_keys) == 0:
+        return jsonify({"error": "At least one API key is required"}), 400
+    
+    try:
+        # 텍스트를 청크로 분할 (청크와 시작 위치를 함께 받음)
+        chunk_data = split_text_into_chunks(input_text, chunk_size, overlap_size)
+        current_app.logger.info(f"Split text into {len(chunk_data)} chunks (size: {chunk_size}, overlap: {overlap_size})")
+        
+        # Gemini 배치 프로세서 초기화
+        gemini_config = {
+            'gemini_model': gemini_model,
+            'temperature': temperature,
+            'max_tokens': max_tokens
+        }
+        batch_processor = GeminiDirectBatchProcessor(api_keys, gemini_config)
+        
+        def generate_gemini_batch_stream():
+            try:
+                total_chunks = len(chunk_data)
+                processed_chunks = 0
+                all_results = []
+                current_frame_id_offset = 0  # 고유 frame_id를 위한 오프셋 추적
+                
+                # 배치 단위로 처리
+                for batch_start in range(0, total_chunks, batch_size):
+                    batch_end = min(batch_start + batch_size, total_chunks)
+                    batch_chunk_data = chunk_data[batch_start:batch_end]
+                    batch_number = (batch_start // batch_size) + 1
+                    total_batches = (total_chunks + batch_size - 1) // batch_size
+                    
+                    yield f"data: {json.dumps({'type': 'batch_start', 'data': {'batch_number': batch_number, 'total_batches': total_batches, 'batch_size': len(batch_chunk_data), 'progress': f'{processed_chunks}/{total_chunks}'}})}\n\n"
+                    
+                    # 배치 내 청크들 처리
+                    batch_results = []
+                    for i, (chunk, chunk_start_pos) in enumerate(batch_chunk_data):
+                        chunk_index = batch_start + i
+                        
+                        yield f"data: {json.dumps({'type': 'chunk_start', 'data': {'chunk_index': chunk_index + 1, 'chunk_preview': chunk[:100] + '...' if len(chunk) > 100 else chunk}})}\n\n"
+                        
+                        try:
+                            # 청크 처리 - 고유한 frame_id_offset 및 시작 위치 전달
+                            result = batch_processor.process_chunk(chunk, prompt_template, current_frame_id_offset, chunk_start_pos)
+                            
+                            if result.get('success'):
+                                extracted_frames = result.get('extracted_frames', [])
+                                batch_results.append({
+                                    'chunk_index': chunk_index,
+                                    'raw_content': result.get('raw_content', ''),
+                                    'extracted_frames': extracted_frames,
+                                    'chunk_preview': result.get('chunk_preview', ''),
+                                    'status': 'success'
+                                })
+                                
+                                # frame_id_offset 업데이트
+                                current_frame_id_offset += len(extracted_frames)
+                                
+                                yield f"data: {json.dumps({'type': 'chunk_complete', 'data': {'chunk_index': chunk_index + 1, 'frames_count': len(extracted_frames), 'preview': result.get('chunk_preview', ''), 'raw_content_preview': result.get('raw_content', '')[:200] + '...' if len(result.get('raw_content', '')) > 200 else result.get('raw_content', '')}})}\n\n"
+                            else:
+                                batch_results.append({
+                                    'chunk_index': chunk_index,
+                                    'error': result.get('error', 'Unknown error'),
+                                    'chunk_preview': result.get('chunk_preview', ''),
+                                    'status': 'error'
+                                })
+                                
+                                yield f"data: {json.dumps({'type': 'chunk_error', 'data': {'chunk_index': chunk_index + 1, 'error': result.get('error', 'Unknown error')}})}\n\n"
+                            
+                        except Exception as e:
+                            batch_results.append({
+                                'chunk_index': chunk_index,
+                                'error': str(e),
+                                'status': 'error'
+                            })
+                            
+                            yield f"data: {json.dumps({'type': 'chunk_error', 'data': {'chunk_index': chunk_index + 1, 'error': str(e)}})}\n\n"
+                        
+                        processed_chunks += 1
+                    
+                    all_results.extend(batch_results)
+                    yield f"data: {json.dumps({'type': 'batch_complete', 'data': {'batch_number': batch_number, 'results': batch_results, 'progress': f'{processed_chunks}/{total_chunks}'}})}\n\n"
+                    
+                    # 배치 간 대기
+                    if batch_end < total_chunks and delay_between_batches > 0:
+                        current_app.logger.info(f"Waiting {delay_between_batches}s before next batch...")
+                        time.sleep(delay_between_batches)
+                
+                # 모든 프레임 수집
+                all_frames = []
+                for batch_result in all_results:
+                    if batch_result.get('status') == 'success' and batch_result.get('extracted_frames'):
+                        all_frames.extend(batch_result['extracted_frames'])
+                
+                # 완료 이벤트 - 실제 추출 결과 포함
+                final_data = {
+                    'total_processed': processed_chunks,
+                    'total_frames': len(all_frames),
+                    'all_frames': all_frames,
+                    'api_key_usage': dict(batch_processor.key_usage_count),
+                    'batch_results_summary': [
+                        {
+                            'chunk_index': r.get('chunk_index'),
+                            'status': r.get('status'),
+                            'frames_count': len(r.get('extracted_frames', [])),
+                            'error': r.get('error') if r.get('status') == 'error' else None
+                        }
+                        for r in all_results
+                    ]
+                }
+                
+                # 디버깅용 로그 추가
+                current_app.logger.info(f"Sending processing_complete event with {len(all_frames)} frames")
+                current_app.logger.info(f"final_data keys: {list(final_data.keys())}")
+                
+                yield f"data: {json.dumps({'type': 'processing_complete', 'data': final_data})}\n\n"
+                
+                # 실제 추출 결과를 기존 UI와 호환되는 형식으로 전송
+                if all_frames:
+                    # LLM-IE 호환 문서 구조 생성
+                    llm_ie_document = {
+                        'doc_id': 'gemini_batch_extraction',
+                        'text': input_text,
+                        'frames': all_frames,
+                        'relations': []
+                    }
+                    
+                    current_app.logger.info(f"Sending result event with {len(all_frames)} frames")
+                    yield f"data: {json.dumps({'type': 'result', 'frames': all_frames, 'document': llm_ie_document})}\n\n"
+                else:
+                    current_app.logger.warning("No frames to send in result event")
+                
+            except Exception as e:
+                current_app.logger.error(f"Error during Gemini batch processing: {e}\n{traceback.format_exc()}")
+                yield f"data: {json.dumps({'type': 'batch_error', 'message': f'Gemini batch processing failed: {str(e)}'})}\n\n"
+            finally:
+                yield "event: end\ndata: {}\n\n"
+        
+        return Response(stream_with_context(generate_gemini_batch_stream()), mimetype='text/event-stream')
+        
+    except Exception as e:
+        current_app.logger.error(f"Failed to setup Gemini batch processing: {e}")
+        return jsonify({"error": f"Gemini batch processing setup failed: {str(e)}"}), 500
+
+
+@main_bp.route('/api/frame-extraction/gemini-single', methods=['POST'])
+def api_frame_extraction_gemini_single():
+    """
+    Gemini 직접 호출을 사용한 단일 추출 엔드포인트
+    """
+    data = request.json
+    input_text = data.get('inputText', '')
+    prompt_template = data.get('promptTemplate', '')
+    gemini_config = data.get('geminiConfig', {})
+    
+    api_key = gemini_config.get('apiKey', '')
+    gemini_model = gemini_config.get('model', 'gemini-2.0-flash')
+    temperature = float(gemini_config.get('temperature', 0.2))
+    max_tokens = int(gemini_config.get('maxTokens', 4096))
+    
+    if not input_text:
+        return jsonify({"error": "Input text is required"}), 400
+    if not prompt_template:
+        return jsonify({"error": "Prompt template is required"}), 400
+    if not api_key:
+        return jsonify({"error": "Gemini API key is required"}), 400
+    
+    try:
+        from .gemini_direct_engine import GeminiDirectConfig, GeminiDirectEngine
+        
+        config = GeminiDirectConfig(
+            api_key=api_key,
+            model=gemini_model,
+            temperature=temperature,
+            max_output_tokens=max_tokens
+        )
+        
+        engine = GeminiDirectEngine(config)
+        
+        def generate_gemini_single_stream():
+            try:
+                yield f"data: {json.dumps({'type': 'info', 'data': 'Starting Gemini Direct extraction...'})}\n\n"
+                
+                # 프롬프트 템플릿에서 {{text}} 대체
+                full_prompt = prompt_template.replace('{{text}}', input_text)
+                
+                messages = [
+                    {'role': 'user', 'content': full_prompt}
+                ]
+                
+                yield f"data: {json.dumps({'type': 'info', 'data': 'Sending request to Gemini...'})}\n\n"
+                
+                # Gemini API 호출
+                response_generator = engine.chat_completion(messages, stream=False)
+                
+                for response in response_generator:
+                    if response.get('type') == 'content' and response.get('done'):
+                        raw_text = response.get('text', '').strip()
+                        yield f"data: {json.dumps({'type': 'info', 'data': 'Processing Gemini response...'})}\n\n"
+                        
+                        # JSON 응답 파싱 (소스 텍스트 전달)
+                        from .gemini_direct_engine import GeminiDirectBatchProcessor
+                        processor = GeminiDirectBatchProcessor([api_key], {'temperature': temperature})
+                        extracted_frames = processor._parse_extraction_response(raw_text, input_text)
+                        
+                        yield f"data: {json.dumps({'type': 'info', 'data': f'Extracted {len(extracted_frames)} frames'})}\n\n"
+                        
+                        # 결과 전송
+                        if extracted_frames:
+                            # LLM-IE 호환 문서 구조 생성
+                            llm_ie_document = {
+                                'doc_id': 'gemini_single_extraction',
+                                'text': input_text,
+                                'frames': extracted_frames,
+                                'relations': []
+                            }
+                            yield f"data: {json.dumps({'type': 'result', 'frames': extracted_frames, 'document': llm_ie_document})}\n\n"
+                        else:
+                            yield f"data: {json.dumps({'type': 'warning', 'data': 'No frames extracted'})}\n\n"
+                            yield f"data: {json.dumps({'type': 'debug', 'data': f'Raw response: {raw_text}'})}\n\n"
+                        
+                        break
+                        
+                    elif response.get('type') == 'error':
+                        yield f"data: {json.dumps({'type': 'error', 'message': response.get('error', 'Unknown error')})}\n\n"
+                        break
+                
+            except Exception as e:
+                current_app.logger.error(f"Error during Gemini single extraction: {e}\n{traceback.format_exc()}")
+                yield f"data: {json.dumps({'type': 'error', 'message': f'Gemini extraction failed: {str(e)}'})}\n\n"
+            finally:
+                yield "event: end\ndata: {}\n\n"
+        
+        return Response(stream_with_context(generate_gemini_single_stream()), mimetype='text/event-stream')
+        
+    except Exception as e:
+        current_app.logger.error(f"Failed to setup Gemini single extraction: {e}")
+        return jsonify({"error": f"Gemini extraction setup failed: {str(e)}"}), 500
 

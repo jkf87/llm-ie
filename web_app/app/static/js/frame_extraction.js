@@ -10,10 +10,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const fuzzyMatchElem = document.getElementById('fe-fuzzy-match');
 
     const startButton = document.getElementById('start-extraction-btn');
+    const startBatchButton = document.getElementById('start-batch-extraction-btn');
     const clearButton = document.getElementById('clear-extraction-btn');
     const downloadButton = document.getElementById('download-frames-btn');
     const outputElem = document.getElementById('extraction-output');
     const displayInputElem = document.getElementById('display-input-text');
+    
+    // 배치 처리 UI 요소들
+    const enableBatchCheckbox = document.getElementById('fe-enable-batch');
+    const batchOptionsDiv = document.getElementById('fe-batch-options');
+    const batchTypeLlmieRadio = document.getElementById('fe-batch-type-llmie');
+    const batchTypeGeminiRadio = document.getElementById('fe-batch-type-gemini');
+    const apiKeysTextarea = document.getElementById('fe-api-keys');
+    const chunkSizeInput = document.getElementById('fe-chunk-size');
+    const overlapSizeInput = document.getElementById('fe-overlap-size');
+    const batchSizeInput = document.getElementById('fe-batch-size');
+    const delayBetweenBatchesInput = document.getElementById('fe-delay-between-batches');
 
     const feLlmApiSelect = document.getElementById('fe-llm-api-select');
     const feLlmConfigTypeSelect = document.getElementById('fe-llm-config-type-select');
@@ -38,6 +50,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const feLitellmModel = document.getElementById('fe-litellm-model');
     const feLitellmApiKey = document.getElementById('fe-litellm-api-key');
     const feLitellmBaseUrl = document.getElementById('fe-litellm-base-url');
+    const feGeminiApiKey = document.getElementById('fe-gemini-api-key');
+    const feGeminiModel = document.getElementById('fe-gemini-model');
     
     const allFeApiOptionElements = [
         feOpenaiCompatibleApiKey, feLlmBaseUrl, feLlmModelOpenaiComp,
@@ -45,7 +59,8 @@ document.addEventListener('DOMContentLoaded', () => {
         feHfToken, feHfModelOrEndpoint,
         feOpenaiApiKey, feOpenaiModel, // feOpenaiReasoningModel reference removed
         feAzureOpenaiApiKey, feAzureEndpoint, feAzureApiVersion, feAzureDeploymentName, // feAzureReasoningModel reference removed
-        feLitellmModel, feLitellmApiKey, feLitellmBaseUrl
+        feLitellmModel, feLitellmApiKey, feLitellmBaseUrl,
+        feGeminiApiKey, feGeminiModel
     ].filter(el => el); 
 
     // Conditional LLM Config Type Option Elements for Frame Extraction
@@ -235,6 +250,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (maxTokensElem && savedMaxTokens) maxTokensElem.value = savedMaxTokens;
         const savedFuzzy = localStorage.getItem(`${feStatePrefix}fuzzyMatch`);
         if (fuzzyMatchElem && savedFuzzy !== null) fuzzyMatchElem.checked = (savedFuzzy === 'true');
+        
+        // 배치 처리 설정 복원
+        const savedBatchEnabled = localStorage.getItem(`${feStatePrefix}fe-enable-batch`);
+        if (enableBatchCheckbox && savedBatchEnabled !== null) {
+            enableBatchCheckbox.checked = (savedBatchEnabled === 'true');
+            // 체크박스 상태에 따라 UI 업데이트
+            if (enableBatchCheckbox.checked && batchOptionsDiv) {
+                batchOptionsDiv.style.display = 'block';
+                startButton.style.display = 'none';
+                if (startBatchButton) startBatchButton.style.display = 'inline-block';
+            }
+        }
 
         const savedExtractionOutput = localStorage.getItem(`${feStatePrefix}extractionOutput`);
         if (outputElem && savedExtractionOutput) {
@@ -272,7 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Event Listeners ---
     if (startButton) {
-        startButton.addEventListener('click', () => {
+        startButton.addEventListener('click', async () => {
             const llmConfig = feGetLlmConfiguration();
             if (!llmConfig.api_type) {
                 feShowApiSelectionWarning();
@@ -286,6 +313,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const inputText = inputTextElem.value;
             const promptTemplate = promptTemplateElem.value;
+            
+            // Gemini Direct 처리
+            if (llmConfig.api_type === 'gemini_direct') {
+                const geminiApiKey = feGeminiApiKey?.value?.trim();
+                const geminiModel = feGeminiModel?.value || 'gemini-2.0-flash';
+                
+                if (!geminiApiKey) {
+                    outputElem.innerHTML = '<div class="stream-error-message">Error: Gemini API key is required.</div>';
+                    if (downloadButton) downloadButton.disabled = true;
+                    return;
+                }
+                
+                await handleGeminiDirectExtraction(inputText, promptTemplate, {
+                    apiKey: geminiApiKey,
+                    model: geminiModel,
+                    temperature: parseFloat(temperatureElem?.value) || 0.2,
+                    maxTokens: parseInt(maxTokensElem?.value) || 4096
+                });
+                return;
+            }
+
             const extractionUnit = extractionUnitElem.value;
             const contextType = contextElem.value;
             const fuzzyMatch = fuzzyMatchElem.checked;
@@ -583,7 +631,16 @@ document.addEventListener('DOMContentLoaded', () => {
         ...allFeApiOptionElements,
         feLlmConfigTypeSelect, // The dropdown itself needs to trigger save on change
         feOpenAIReasoningEffortSelect,
-        feQwenThinkingModeCheckbox
+        feQwenThinkingModeCheckbox,
+        // 배치 처리 요소들 추가
+        enableBatchCheckbox,
+        batchTypeLlmieRadio,
+        batchTypeGeminiRadio,
+        apiKeysTextarea,
+        chunkSizeInput,
+        overlapSizeInput,
+        batchSizeInput,
+        delayBetweenBatchesInput
     ].filter(el => el); 
 
     feElementsToSaveOnInputOrChange.forEach(element => {
@@ -592,6 +649,431 @@ document.addEventListener('DOMContentLoaded', () => {
             element.addEventListener(eventType, saveFrameExtractionState);
         }
     });
+
+    // 배치 처리 UI 토글
+    console.log('Batch elements check:', {
+        enableBatchCheckbox: !!enableBatchCheckbox,
+        batchOptionsDiv: !!batchOptionsDiv,
+        startBatchButton: !!startBatchButton
+    });
+
+    if (enableBatchCheckbox && batchOptionsDiv) {
+        console.log('Adding batch checkbox event listener');
+        enableBatchCheckbox.addEventListener('change', () => {
+            console.log('Batch checkbox changed:', enableBatchCheckbox.checked);
+            if (enableBatchCheckbox.checked) {
+                batchOptionsDiv.style.display = 'block';
+                startButton.style.display = 'none';
+                startBatchButton.style.display = 'inline-block';
+                console.log('Batch mode enabled');
+            } else {
+                batchOptionsDiv.style.display = 'none';
+                startButton.style.display = 'inline-block';
+                startBatchButton.style.display = 'none';
+                console.log('Batch mode disabled');
+            }
+        });
+        
+        // 배치 체크박스 상태 변경 시에도 저장
+        enableBatchCheckbox.addEventListener('change', saveFrameExtractionState);
+    } else {
+        console.log('Batch elements not found:', {
+            enableBatchCheckbox: enableBatchCheckbox,
+            batchOptionsDiv: batchOptionsDiv
+        });
+    }
+
+    // 배치 처리 버튼 이벤트
+    if (startBatchButton) {
+        console.log('Batch button found, adding event listener');
+        startBatchButton.addEventListener('click', async () => {
+            console.log('Batch extraction button clicked!');
+            const inputText = inputTextElem.value.trim();
+            const promptTemplate = promptTemplateElem.value.trim();
+
+            if (!inputText || !promptTemplate) {
+                alert('Please provide both input text and prompt template.');
+                return;
+            }
+
+            // API 키 파싱
+            const apiKeysText = apiKeysTextarea.value.trim();
+            const apiKeys = apiKeysText.split('\n').map(key => key.trim()).filter(key => key.length > 0);
+            
+            if (apiKeys.length === 0) {
+                alert('Please provide at least one API key for batch processing.');
+                return;
+            }
+
+            const llmConfig = feGetLlmConfiguration();
+            if (!llmConfig.api_type) {
+                alert('Please configure the LLM settings properly.');
+                return;
+            }
+
+            const extractorConfig = {
+                prompt_template: promptTemplate,
+                extraction_unit_type: extractionUnitElem.value,
+                context_chunker_type: contextElem.value,
+                slide_window_size: 2, // default value
+                case_sensitive: false,
+                fuzzy_match: fuzzyMatchElem.checked,
+                allow_overlap_entities: false,
+                fuzzy_buffer_size: 0.2,
+                fuzzy_score_cutoff: 0.8
+            };
+
+            // 배치 타입 확인
+            const batchType = batchTypeGeminiRadio?.checked ? 'gemini' : 'llmie';
+            
+            const batchConfig = {
+                apiKeys: apiKeys,
+                chunkSize: parseInt(chunkSizeInput.value) || 1000,
+                overlapSize: parseInt(overlapSizeInput.value) || 100,
+                batchSize: parseInt(batchSizeInput.value) || 5,
+                delayBetweenBatches: parseFloat(delayBetweenBatchesInput.value) || 2.0,
+                geminiModel: 'gemini-2.0-flash',
+                temperature: parseFloat(temperatureElem?.value) || 0.2,
+                maxTokens: parseInt(maxTokensElem?.value) || 4096
+            };
+
+            // UI 상태 업데이트
+            startBatchButton.disabled = true;
+            clearButton.disabled = true;
+            if (downloadButton) downloadButton.disabled = true;
+            currentExtractedFrames = null;
+
+            displayInputElem.innerHTML = escapeHTML(inputText);
+            
+            if (batchType === 'gemini') {
+                outputElem.innerHTML = '<div class="stream-info-message">Starting Gemini Direct API batch processing...</div>';
+            } else {
+                outputElem.innerHTML = '<div class="stream-info-message">Starting LLM-IE framework batch processing...</div>';
+            }
+
+            let payload, endpoint;
+            
+            if (batchType === 'gemini') {
+                // Gemini 직접 호출용 페이로드
+                payload = {
+                    inputText: inputText,
+                    promptTemplate: promptTemplate,
+                    batchConfig: batchConfig
+                };
+                endpoint = '/api/frame-extraction/gemini-batch';
+            } else {
+                // LLM-IE 프레임워크용 페이로드
+                payload = {
+                    inputText: inputText,
+                    llmConfig: llmConfig,
+                    extractorConfig: extractorConfig,
+                    batchConfig: batchConfig
+                };
+                endpoint = '/api/frame-extraction/batch';
+            }
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const reader = response.body.getReader();
+                let buffer = '';
+                let allResults = [];
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += new TextDecoder().decode(value);
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop(); // Keep incomplete line in buffer
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const eventData = JSON.parse(line.slice(6));
+                                handleBatchEvent(eventData, allResults);
+                            } catch (e) {
+                                console.error('Failed to parse batch event:', e);
+                                console.error('Raw line:', line);
+                                console.error('Line slice:', line.slice(6));
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                outputElem.innerHTML = `<div class="stream-error-message">Batch processing error: ${escapeHTML(error.toString())}</div>`;
+                console.error('Batch processing error:', error);
+            } finally {
+                startBatchButton.disabled = false;
+                clearButton.disabled = false;
+                saveFrameExtractionState();
+            }
+        });
+    }
+
+    async function handleGeminiDirectExtraction(inputText, promptTemplate, geminiConfig) {
+        displayInputElem.innerHTML = escapeHTML(inputText);
+        outputElem.innerHTML = '<div class="stream-info-message">Starting Gemini Direct extraction...</div>';
+        startButton.disabled = true;
+        clearButton.disabled = true;
+        if (downloadButton) downloadButton.disabled = true;
+        currentExtractedFrames = null;
+
+        const payload = {
+            inputText: inputText,
+            promptTemplate: promptTemplate,
+            geminiConfig: geminiConfig
+        };
+
+        try {
+            const response = await fetch('/api/frame-extraction/gemini-single', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const reader = response.body.getReader();
+            let buffer = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += new TextDecoder().decode(value);
+                const lines = buffer.split('\n');
+                buffer = lines.pop();
+
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        try {
+                            const eventData = JSON.parse(line.slice(6));
+                            handleSingleExtractionEvent(eventData);
+                        } catch (e) {
+                            console.warn('Failed to parse Gemini event:', e);
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            outputElem.innerHTML += `<div class="stream-error-message">Gemini extraction error: ${escapeHTML(error.toString())}</div>`;
+            console.error('Gemini extraction error:', error);
+        } finally {
+            startButton.disabled = false;
+            clearButton.disabled = false;
+            saveFrameExtractionState();
+        }
+    }
+
+    function handleSingleExtractionEvent(eventData) {
+        const { type, data, frames, message, document } = eventData;
+        
+        switch (type) {
+            case 'info':
+                // 로그 메시지 숨김 - 콘솔에만 출력
+                console.log('[INFO]', data);
+                break;
+            case 'warning':
+                // 경고는 표시
+                outputElem.innerHTML += `<div class="stream-warning-message">${data}</div>`;
+                break;
+            case 'debug':
+                // 디버그 메시지 숨김 - 콘솔에만 출력
+                console.log('[DEBUG]', data);
+                break;
+            case 'result':
+                if (frames && frames.length > 0) {
+                    currentExtractedFrames = frames;
+                    
+                    // LLM-IE 문서 형태로 결과 표시
+                    const llmieDocument = document || {
+                        doc_id: 'extraction_result',
+                        text: inputTextElem.value,
+                        frames: frames,
+                        relations: []
+                    };
+                    
+                    // JSON 형태로 결과 표시
+                    const resultJson = JSON.stringify(llmieDocument, null, 2);
+                    outputElem.innerHTML += `<div class="extraction-result">
+                        <h3>Extraction Results (${frames.length} frames)</h3>
+                        <pre class="llmie-result">${escapeHTML(resultJson)}</pre>
+                    </div>`;
+                    
+                    // 다운로드 버튼 활성화
+                    if (downloadButton) {
+                        downloadButton.disabled = false;
+                    }
+                } else {
+                    outputElem.innerHTML += `<div class="stream-warning-message">No frames extracted</div>`;
+                }
+                break;
+            case 'error':
+                outputElem.innerHTML += `<div class="stream-error-message">Error: ${message}</div>`;
+                break;
+        }
+        
+        outputElem.scrollTop = outputElem.scrollHeight;
+    }
+
+    function handleBatchEvent(eventData, allResults) {
+        try {
+            const { type, data } = eventData;
+            
+            // 디버깅을 위해 이벤트 데이터 상세 로그
+            console.log('[EVENT]', type);
+            console.log('[EVENT DATA]', JSON.stringify(eventData, null, 2));
+            
+            // 다운로드 버튼 상태 확인
+            if (downloadButton) {
+                console.log('[DOWNLOAD BTN]', downloadButton.disabled ? 'DISABLED' : 'ENABLED');
+                console.log('[CURRENT FRAMES]', currentExtractedFrames ? currentExtractedFrames.length : 'NONE');
+            }
+            
+            switch (type) {
+            case 'batch_start':
+                // 로그를 콘솔로만 출력
+                console.log(`[BATCH] Starting batch ${data.batch_number}/${data.total_batches} (${data.batch_size} chunks) - Progress: ${data.progress}`);
+                break;
+                
+            case 'chunk_start':
+                // 청크 시작 로그 숨김
+                console.log(`[CHUNK] Processing chunk ${data.chunk_index + 1}...`);
+                break;
+                
+            case 'chunk_complete':
+                allResults.push(data);
+                const framesInfo = data.frames_count ? ` (${data.frames_count} frames)` : '';
+                console.log(`[CHUNK] Completed chunk ${data.chunk_index}${framesInfo}`);
+                break;
+                
+            case 'chunk_error':
+                outputElem.innerHTML += `<div class="stream-error-message">✗ Error in chunk ${data.chunk_index + 1}: ${data.error}</div>`;
+                break;
+                
+            case 'batch_complete':
+                console.log(`[BATCH] Completed batch ${data.batch_number} - Progress: ${data.progress}`);
+                break;
+                
+            case 'processing_complete':
+                // 간단한 완료 메시지만 표시
+                outputElem.innerHTML += `<div class="stream-success-message">✅ Processing Complete: ${data.total_frames || 0} frames extracted</div>`;
+                console.log(`[BATCH] Processing complete! ${data.total_processed} chunks processed`);
+                console.log(`[BATCH] API Key Usage:`, data.api_key_usage);
+                
+                // 상세한 데이터 구조 디버깅
+                console.log('[PROCESSING_COMPLETE] data keys:', Object.keys(data));
+                console.log('[PROCESSING_COMPLETE] all_frames type:', typeof data.all_frames);
+                console.log('[PROCESSING_COMPLETE] all_frames length:', data.all_frames ? data.all_frames.length : 'UNDEFINED');
+                if (data.all_frames && data.all_frames.length > 0) {
+                    console.log('[PROCESSING_COMPLETE] First frame sample:', data.all_frames[0]);
+                }
+                
+                // 모든 프레임이 있다면 결과를 표시하고 다운로드 버튼 활성화
+                if (data.all_frames && data.all_frames.length > 0) {
+                    console.log('[SUCCESS] Found frames in processing_complete:', data.all_frames.length);
+                    currentExtractedFrames = data.all_frames;
+                    
+                    // LLM-IE 문서 구조 생성
+                    const llmieDocument = {
+                        doc_id: 'batch_extraction_result',
+                        text: inputTextElem.value,
+                        frames: data.all_frames,
+                        relations: []
+                    };
+                    
+                    // JSON 형태로 결과 표시
+                    const resultJson = JSON.stringify(llmieDocument, null, 2);
+                    outputElem.innerHTML += `<div class="extraction-result">
+                        <h3>Batch Extraction Results (${data.all_frames.length} frames)</h3>
+                        <pre class="llmie-result">${escapeHTML(resultJson)}</pre>
+                    </div>`;
+                    
+                    // 다운로드 버튼 활성화
+                    if (downloadButton) {
+                        downloadButton.disabled = false;
+                        console.log('✅ Download button activated from processing_complete with', data.all_frames.length, 'frames');
+                    }
+                } else {
+                    console.log('[ERROR] No frames found in processing_complete event!');
+                    console.log('[ERROR] data.all_frames:', data.all_frames);
+                }
+                break;
+                
+            case 'result':
+                // LLM-IE 문서 형태로 결과 처리
+                // 서버에서 보내는 구조: {'type': 'result', 'frames': all_frames, 'document': llm_ie_document}
+                console.log('[RESULT EVENT] eventData:', eventData);
+                console.log('[RESULT EVENT] eventData.frames:', eventData.frames);
+                console.log('[RESULT EVENT] eventData.document:', eventData.document);
+                
+                const frames = eventData.frames || eventData.data?.frames;
+                const document = eventData.document || eventData.data?.document;
+                
+                console.log('[RESULT EVENT] extracted frames:', frames);
+                console.log('[RESULT EVENT] extracted document:', document);
+                
+                if (frames && frames.length > 0) {
+                    currentExtractedFrames = frames;
+                    
+                    // LLM-IE 문서 구조 생성 (document가 있으면 사용, 없으면 생성)
+                    const llmieDocument = document || {
+                        doc_id: 'batch_extraction_result',
+                        text: inputTextElem.value,
+                        frames: frames,
+                        relations: []
+                    };
+                    
+                    // JSON 형태로 결과 표시
+                    const resultJson = JSON.stringify(llmieDocument, null, 2);
+                    outputElem.innerHTML += `<div class="extraction-result">
+                        <h3>Batch Extraction Results (${frames.length} frames)</h3>
+                        <pre class="llmie-result">${escapeHTML(resultJson)}</pre>
+                    </div>`;
+                    
+                    // 다운로드 버튼 활성화
+                    if (downloadButton) {
+                        downloadButton.disabled = false;
+                        console.log('✅ Download button activated with', frames.length, 'frames');
+                    }
+                } else {
+                    outputElem.innerHTML += `<div class="stream-warning-message">No frames extracted from the text</div>`;
+                    console.log('⚠️ No frames found in result event');
+                    console.log('[RESULT EVENT] eventData structure:', JSON.stringify(eventData, null, 2));
+                }
+                break;
+                
+            case 'batch_processing_complete':
+                // 호환성을 위해 유지
+                outputElem.innerHTML += `<div class="stream-success-message">🎉 Batch processing complete! Processed ${data.total_chunks_processed || data.total_processed || 0} chunks</div>`;
+                outputElem.innerHTML += `<div class="stream-info-message">API Key Usage: ${JSON.stringify(data.api_key_usage, null, 2)}</div>`;
+                break;
+                
+            case 'batch_error':
+                outputElem.innerHTML += `<div class="stream-error-message">Batch processing failed: ${data.message}</div>`;
+                break;
+        }
+        
+        // 스크롤을 맨 아래로
+        outputElem.scrollTop = outputElem.scrollHeight;
+        } catch (error) {
+            console.error('[BATCH EVENT ERROR]', error);
+            console.error('[BATCH EVENT ERROR] eventData:', eventData);
+            console.error('[BATCH EVENT ERROR] type:', eventData?.type);
+            outputElem.innerHTML += `<div class="stream-error-message">Event handling error: ${error.message}</div>`;
+        }
+    }
 
     loadFrameExtractionState(); 
 });
