@@ -32,13 +32,37 @@ document.addEventListener('DOMContentLoaded', () => {
     let uploadedFileData = null;
     let currentKnowledgeGraph = null;
     let networkInstance = null;
+    let networkNodes = null;
+    let networkEdges = null;
+    
+    // 수동 관계 생성 관련 변수들
+    let manualRelationMode = false;
+    let selectedNodes = [];
+    let currentRelationId = 1;
 
     // 파일 업로드 처리
+    console.log('Setting up file upload handlers...');
+    console.log('fileInput element:', fileInput);
+    
     if (fileInput) {
+        console.log('Adding change event listener to fileInput');
         fileInput.addEventListener('change', handleFileSelect);
+    } else {
+        console.error('fileInput element not found!');
     }
     
     if (uploadZone) {
+        console.log('Setting up uploadZone event listeners');
+        
+        // 클릭으로 파일 선택 트리거
+        uploadZone.addEventListener('click', (e) => {
+            // 버튼 클릭이 아닌 영역 클릭시에만 파일 선택 트리거
+            if (!e.target.matches('button') && fileInput) {
+                console.log('uploadZone clicked, triggering file input');
+                fileInput.click();
+            }
+        });
+        
         uploadZone.addEventListener('dragover', (e) => {
             e.preventDefault();
             uploadZone.classList.add('drag-over');
@@ -51,12 +75,27 @@ document.addEventListener('DOMContentLoaded', () => {
         uploadZone.addEventListener('drop', (e) => {
             e.preventDefault();
             uploadZone.classList.remove('drag-over');
+            console.log('Files dropped:', e.dataTransfer.files);
             
             const files = e.dataTransfer.files;
             if (files.length > 0) {
                 handleFile(files[0]);
             }
         });
+    } else {
+        console.error('uploadZone element not found!');
+    }
+
+    // 파일 선택 버튼 이벤트
+    const fileSelectBtn = document.getElementById('kg-file-select-btn');
+    if (fileSelectBtn && fileInput) {
+        console.log('Setting up file select button');
+        fileSelectBtn.addEventListener('click', () => {
+            console.log('File select button clicked');
+            fileInput.click();
+        });
+    } else {
+        console.error('File select button or file input not found:', { fileSelectBtn, fileInput });
     }
 
     // 버튼 이벤트
@@ -112,17 +151,84 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+    
+    // 수동 관계 생성 버튼들
+    const manualRelationModeBtn = document.getElementById('manual-relation-mode-btn');
+    const manualRelationControls = document.getElementById('manualRelationControls');
+    const cancelManualRelationBtn = document.getElementById('cancelManualRelation');
+    const clearSelectionBtn = document.getElementById('clearSelection');
+    const createRelationBtn = document.getElementById('createRelationBtn');
+    const relationConfidenceSlider = document.getElementById('relationConfidence');
+    const confidenceValueSpan = document.getElementById('confidenceValue');
+    
+    if (manualRelationModeBtn) {
+        manualRelationModeBtn.addEventListener('click', toggleManualRelationMode);
+    }
+    
+    if (cancelManualRelationBtn) {
+        cancelManualRelationBtn.addEventListener('click', exitManualRelationMode);
+    }
+    
+    if (clearSelectionBtn) {
+        clearSelectionBtn.addEventListener('click', clearNodeSelection);
+    }
+    
+    if (createRelationBtn) {
+        createRelationBtn.addEventListener('click', createManualRelation);
+    }
+    
+    if (relationConfidenceSlider && confidenceValueSpan) {
+        relationConfidenceSlider.addEventListener('input', (e) => {
+            confidenceValueSpan.textContent = e.target.value;
+        });
+    }
+    
+    // 관계 추출 컨텍스트 필드들
+    const relationContextTextarea = document.getElementById('kg-relation-context');
+    const relationGuidelinesTextarea = document.getElementById('kg-relation-guidelines');
+    const relationTemplate = document.getElementById('kg-relation-template');
+    const relationConfidenceRange = document.getElementById('kg-relation-confidence');
+    const confidenceValue = document.getElementById('confidence-value');
+    
+    // 신뢰도 슬라이더 업데이트
+    if (relationConfidenceRange && confidenceValue) {
+        relationConfidenceRange.addEventListener('input', (e) => {
+            confidenceValue.textContent = e.target.value;
+        });
+    }
+    
+    // 관계 템플릿 변경 시 컨텍스트 예시 업데이트
+    if (relationTemplate && relationContextTextarea) {
+        relationTemplate.addEventListener('change', (e) => {
+            updateContextPlaceholder(e.target.value);
+        });
+    }
 
     function handleFileSelect(event) {
+        console.log('handleFileSelect called', event);
         const file = event.target.files[0];
+        console.log('Selected file:', file);
         if (file) {
             handleFile(file);
+        } else {
+            console.log('No file selected');
         }
     }
 
     function handleFile(file) {
+        console.log('handleFile called with:', file);
+        
         if (!file.name.endsWith('.llmie')) {
             alert('LLM-IE 추출 결과 파일 (.llmie)만 지원됩니다.');
+            return;
+        }
+
+        console.log('File validation passed, updating UI...');
+        
+        // DOM 요소 존재 확인
+        if (!fileName || !fileSize || !fileInfo) {
+            console.error('Required DOM elements not found:', { fileName, fileSize, fileInfo });
+            alert('페이지 요소를 찾을 수 없습니다. 페이지를 새로고침해주세요.');
             return;
         }
 
@@ -130,6 +236,8 @@ document.addEventListener('DOMContentLoaded', () => {
         fileName.textContent = file.name;
         fileSize.textContent = formatFileSize(file.size);
         fileInfo.style.display = 'block';
+        
+        console.log('File info updated:', file.name, formatFileSize(file.size));
 
         // 파일 읽기
         const reader = new FileReader();
@@ -186,6 +294,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     llm_api_type: llmApiSelect.value
                 }
             };
+
+            // 관계 추출 컨텍스트 설정 추가
+            const relationDomain = document.getElementById('kg-domain-select');
+            const relationTemplate = document.getElementById('kg-template-select'); 
+            const relationContext = document.getElementById('kg-relation-context');
+            const relationGoal = document.getElementById('kg-relation-goal');
+            const relationConstraints = document.getElementById('kg-relation-guidelines');
+            
+            if (relationDomain && relationTemplate && relationContext && relationGoal && relationConstraints) {
+                requestData.settings.relation_context = {
+                    domain: relationDomain.value,
+                    template: relationTemplate.value,
+                    context: relationContext.value.trim(),
+                    goal: relationGoal.value.trim(),
+                    constraints: relationConstraints.value.trim()
+                };
+            }
 
             // Gemini API 키가 필요한 경우
             if (llmApiSelect.value === 'gemini_direct' && enableLlmInference.checked) {
@@ -327,12 +452,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         networkInstance = new vis.Network(container, data, options);
 
+        // 노드와 엣지 데이터를 전역 변수에 저장 (수동 관계 생성용)
+        networkNodes = nodes;
+        networkEdges = edges;
+        
         // 네트워크 이벤트
         networkInstance.on('selectNode', (params) => {
             if (params.nodes.length > 0) {
                 const nodeId = params.nodes[0];
                 const node = nodes.get(nodeId);
                 console.log('Selected node:', node);
+                
+                // 수동 관계 생성 모드인 경우 특별 처리
+                if (manualRelationMode) {
+                    handleNodeClick(params);
+                }
             }
         });
 
@@ -667,6 +801,339 @@ document.addEventListener('DOMContentLoaded', () => {
             element.addEventListener('change', saveState);
         }
     });
+
+    // 수동 관계 생성 함수들
+    function toggleManualRelationMode() {
+        manualRelationMode = !manualRelationMode;
+        
+        if (manualRelationMode) {
+            enterManualRelationMode();
+        } else {
+            exitManualRelationMode();
+        }
+    }
+    
+    function enterManualRelationMode() {
+        console.log('Entering manual relation mode');
+        manualRelationMode = true;
+        clearNodeSelection();
+        
+        // UI 업데이트
+        if (manualRelationModeBtn) {
+            manualRelationModeBtn.textContent = '❌ 관계 생성 종료';
+            manualRelationModeBtn.classList.remove('btn-outline-success');
+            manualRelationModeBtn.classList.add('btn-outline-danger');
+        }
+        
+        if (manualRelationControls) {
+            manualRelationControls.style.display = 'block';
+        }
+        
+        // 네트워크 시각화 컨테이너에 모드 표시
+        const vizContainer = document.getElementById('kg-visualization');
+        if (vizContainer) {
+            vizContainer.classList.add('manual-relation-mode');
+        }
+        
+        updateNodeSelectionDisplay();
+    }
+    
+    function exitManualRelationMode() {
+        console.log('Exiting manual relation mode');
+        manualRelationMode = false;
+        clearNodeSelection();
+        
+        // UI 업데이트
+        if (manualRelationModeBtn) {
+            manualRelationModeBtn.textContent = '🔗 수동 관계 생성';
+            manualRelationModeBtn.classList.remove('btn-outline-danger');
+            manualRelationModeBtn.classList.add('btn-outline-success');
+        }
+        
+        if (manualRelationControls) {
+            manualRelationControls.style.display = 'none';
+        }
+        
+        // 네트워크 시각화 컨테이너에서 모드 표시 제거
+        const vizContainer = document.getElementById('kg-visualization');
+        if (vizContainer) {
+            vizContainer.classList.remove('manual-relation-mode');
+        }
+    }
+    
+    function clearNodeSelection() {
+        selectedNodes = [];
+        updateNodeSelectionDisplay();
+    }
+    
+    function updateNodeSelectionDisplay() {
+        const selectedNodesList = document.getElementById('selectedNodesList');
+        if (selectedNodesList) {
+            if (selectedNodes.length === 0) {
+                selectedNodesList.textContent = '없음';
+            } else {
+                const nodeLabels = selectedNodes.map(nodeId => {
+                    const node = networkNodes ? networkNodes.get(nodeId) : null;
+                    return node ? node.label : nodeId;
+                });
+                selectedNodesList.innerHTML = nodeLabels.map(label => 
+                    `<span class="selected-node">${label}</span>`
+                ).join(' ');
+            }
+        }
+    }
+    
+    function handleNodeClick(params) {
+        if (!manualRelationMode || !params.nodes || params.nodes.length === 0) {
+            return;
+        }
+        
+        const clickedNodeId = params.nodes[0];
+        const isCtrlPressed = params.event.srcEvent && params.event.srcEvent.ctrlKey;
+        
+        if (selectedNodes.length === 0) {
+            // 첫 번째 노드 선택
+            selectedNodes.push(clickedNodeId);
+            console.log('First node selected:', clickedNodeId);
+        } else if (selectedNodes.length === 1 && isCtrlPressed) {
+            // 두 번째 노드 선택 (Ctrl+클릭)
+            if (selectedNodes[0] !== clickedNodeId) {
+                selectedNodes.push(clickedNodeId);
+                console.log('Second node selected:', clickedNodeId);
+                
+                // 두 노드가 선택되었으므로 관계 생성 모달 표시
+                showManualRelationModal();
+            }
+        } else if (!isCtrlPressed) {
+            // Ctrl 없이 클릭하면 새로운 첫 번째 노드로 설정
+            selectedNodes = [clickedNodeId];
+            console.log('New first node selected:', clickedNodeId);
+        }
+        
+        updateNodeSelectionDisplay();
+    }
+    
+    function showManualRelationModal() {
+        if (selectedNodes.length !== 2) return;
+        
+        const sourceNode = networkNodes ? networkNodes.get(selectedNodes[0]) : null;
+        const targetNode = networkNodes ? networkNodes.get(selectedNodes[1]) : null;
+        
+        if (!sourceNode || !targetNode) return;
+        
+        // 모달 내용 업데이트
+        const sourceNodePreview = document.getElementById('sourceNodePreview');
+        const targetNodePreview = document.getElementById('targetNodePreview');
+        
+        if (sourceNodePreview) {
+            sourceNodePreview.textContent = sourceNode.label;
+        }
+        
+        if (targetNodePreview) {
+            targetNodePreview.textContent = targetNode.label;
+        }
+        
+        // 폼 초기화
+        const relationForm = document.getElementById('manualRelationForm');
+        if (relationForm) {
+            relationForm.reset();
+            // 신뢰도를 기본값으로 설정
+            const confidenceSlider = document.getElementById('relationConfidence');
+            const confidenceValue = document.getElementById('confidenceValue');
+            if (confidenceSlider && confidenceValue) {
+                confidenceSlider.value = '0.9';
+                confidenceValue.textContent = '0.9';
+            }
+        }
+        
+        // 모달 표시
+        const modal = new bootstrap.Modal(document.getElementById('manualRelationModal'));
+        modal.show();
+    }
+    
+    async function createManualRelation() {
+        if (selectedNodes.length !== 2) return;
+        
+        const relationLabel = document.getElementById('relationLabel').value.trim();
+        const relationDescription = document.getElementById('relationDescription').value.trim();
+        const relationConfidence = parseFloat(document.getElementById('relationConfidence').value);
+        const relationDirection = document.getElementById('relationDirection').value;
+        
+        if (!relationLabel) {
+            alert('관계 라벨을 입력해주세요.');
+            return;
+        }
+        
+        // 관계 생성 버튼 비활성화
+        const createBtn = document.getElementById('createRelationBtn');
+        if (createBtn) {
+            createBtn.disabled = true;
+            createBtn.textContent = '생성 중...';
+        }
+        
+        try {
+            // 새로운 관계 데이터
+            const relationData = {
+                id: `manual_rel_${currentRelationId++}`,
+                from: selectedNodes[0],
+                to: selectedNodes[1],
+                label: relationLabel,
+                description: relationDescription,
+                confidence: relationConfidence,
+                direction: relationDirection
+            };
+            
+            // 시각화용 관계 객체
+            const newRelation = {
+                id: relationData.id,
+                from: relationData.from,
+                to: relationData.to,
+                label: relationData.label,
+                title: `${relationData.label}${relationData.description ? ': ' + relationData.description : ''} (신뢰도: ${(relationData.confidence * 100).toFixed(1)}%)`,
+                width: Math.max(1, relationData.confidence * 5),
+                color: { color: '#4CAF50', highlight: '#45a049' }, // 수동 생성 관계는 녹색
+                arrows: relationData.direction === 'directed' ? { to: { enabled: true, scaleFactor: 1, type: 'arrow' } } : false,
+                manual: true,
+                description: relationData.description,
+                confidence: relationData.confidence
+            };
+            
+            // 무방향성 관계인 경우 양방향 화살표 추가
+            if (relationData.direction === 'undirected') {
+                newRelation.arrows = { 
+                    to: { enabled: true, scaleFactor: 1, type: 'arrow' },
+                    from: { enabled: true, scaleFactor: 1, type: 'arrow' }
+                };
+            }
+            
+            // 즉시 시각화에 관계 추가
+            if (networkEdges) {
+                networkEdges.add(newRelation);
+                console.log('Manual relation created:', newRelation);
+            }
+            
+            // 선택적으로 서버에 저장 (현재는 로컬에서만 처리)
+            // 향후 필요시 서버 API 호출 가능:
+            /*
+            const response = await fetch('/api/knowledge-graph/manual-relation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ relation: relationData })
+            });
+            
+            if (!response.ok) {
+                throw new Error('서버에 관계를 저장하는데 실패했습니다.');
+            }
+            */
+            
+            // 성공 메시지
+            console.log('Manual relation added successfully');
+            
+        } catch (error) {
+            console.error('Error creating manual relation:', error);
+            alert('관계 생성 중 오류가 발생했습니다: ' + error.message);
+            
+            // 실패한 경우 추가된 관계 제거
+            if (networkEdges && relationData) {
+                networkEdges.remove(relationData.id);
+            }
+            
+        } finally {
+            // 버튼 상태 복원
+            if (createBtn) {
+                createBtn.disabled = false;
+                createBtn.textContent = '관계 생성';
+            }
+            
+            // 모달 닫기
+            const modal = bootstrap.Modal.getInstance(document.getElementById('manualRelationModal'));
+            if (modal) {
+                modal.hide();
+            }
+            
+            // 선택 초기화
+            clearNodeSelection();
+        }
+    }
+
+    // 컨텍스트 플레이스홀더 업데이트 함수
+    function updateContextPlaceholder() {
+        const domainSelect = document.getElementById('kg-domain-select');
+        const templateSelect = document.getElementById('kg-template-select');
+        const contextTextarea = document.getElementById('kg-relation-context');
+        const goalTextarea = document.getElementById('kg-relation-goal');
+        const constraintsTextarea = document.getElementById('kg-relation-guidelines');
+        
+        if (!domainSelect || !templateSelect || !contextTextarea || !goalTextarea || !constraintsTextarea) {
+            return;
+        }
+        
+        const domain = domainSelect.value;
+        const template = templateSelect.value;
+        
+        // 도메인별 컨텍스트 예시
+        const domainExamples = {
+            'academic': {
+                context: '이 문서는 학술 논문이며, 연구 방법론, 실험 결과, 이론적 배경 등을 다룹니다.',
+                goal: '연구 주제, 방법론, 저자, 기관 간의 학술적 관계를 식별하고 연구 네트워크를 구성합니다.',
+                constraints: '인용 관계, 공동 연구 관계, 이론적 영향 관계에 중점을 두고, 추측성 관계는 제외합니다.'
+            },
+            'business': {
+                context: '이 문서는 비즈니스/기업 관련 내용으로, 조직, 제품, 서비스, 시장 등을 다룹니다.',
+                goal: '기업 간 파트너십, 경쟁 관계, 공급망, 투자 관계 등 비즈니스 생태계를 파악합니다.',
+                constraints: '계약 관계, 소유 관계, 경쟁 관계, 협력 관계에 집중하고, 루머나 추측은 배제합니다.'
+            },
+            'technical': {
+                context: '이 문서는 기술/시스템 관련 내용으로, 소프트웨어, 하드웨어, 프로토콜 등을 다룹니다.',
+                goal: '시스템 컴포넌트 간 의존성, 통신 관계, 상속 관계 등 기술적 아키텍처를 구성합니다.',
+                constraints: 'API 의존성, 데이터 흐름, 상속/구현 관계, 통신 프로토콜에 중점을 두고 명확한 기술적 관계만 추출합니다.'
+            },
+            'general': {
+                context: '이 문서는 일반적인 정보를 담고 있으며, 다양한 주제를 포괄합니다.',
+                goal: '엔티티 간의 명확한 관계를 식별하여 정보의 구조와 연결성을 파악합니다.',
+                constraints: '명시적으로 언급된 관계에만 집중하고, 애매하거나 추론적인 관계는 제외합니다.'
+            }
+        };
+        
+        // 템플릿별 추가 지침
+        const templateGuidance = {
+            'detailed': {
+                goal_suffix: ' 관계의 세부사항과 맥락을 포함하여 상세하게 추출합니다.',
+                constraints_suffix: ' 관계의 강도, 방향성, 시간적 맥락을 고려하여 정확도를 높입니다.'
+            },
+            'concise': {
+                goal_suffix: ' 핵심적인 관계만을 간결하게 식별합니다.',
+                constraints_suffix: ' 명확하고 직접적인 관계에만 집중하여 노이즈를 최소화합니다.'
+            },
+            'exploratory': {
+                goal_suffix: ' 다양한 관계 유형을 탐색하여 숨겨진 연결점을 발견합니다.',
+                constraints_suffix: ' 직접 관계뿐만 아니라 간접적 연관성도 고려하되 신뢰도 기준을 유지합니다.'
+            }
+        };
+        
+        // 플레이스홀더 업데이트
+        const domainData = domainExamples[domain] || domainExamples['general'];
+        const templateData = templateGuidance[template] || templateGuidance['detailed'];
+        
+        contextTextarea.placeholder = domainData.context;
+        goalTextarea.placeholder = domainData.goal + (templateData.goal_suffix || '');
+        constraintsTextarea.placeholder = domainData.constraints + (templateData.constraints_suffix || '');
+    }
+
+    // 관계 컨텍스트 필드 이벤트 리스너 설정
+    const relationDomainSelect = document.getElementById('kg-domain-select');
+    const relationTemplateSelect = document.getElementById('kg-template-select');
+    
+    if (relationDomainSelect) {
+        relationDomainSelect.addEventListener('change', updateContextPlaceholder);
+    }
+    
+    if (relationTemplateSelect) {
+        relationTemplateSelect.addEventListener('change', updateContextPlaceholder);
+    }
+    
+    // 초기 플레이스홀더 설정
+    updateContextPlaceholder();
 
     // 초기 상태 복원
     restoreState();

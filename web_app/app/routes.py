@@ -761,6 +761,47 @@ def api_knowledge_graph_generate():
         use_iterative_inference = settings.get('use_iterative_inference', True)
         enable_entity_resolution = settings.get('enable_entity_resolution', True)
         
+        # 관계 추출 컨텍스트 설정 처리
+        relation_context = settings.get('relation_context', {})
+        relation_domain = relation_context.get('domain', 'general')
+        relation_template = relation_context.get('template', 'detailed')
+        context_prompt = relation_context.get('context', '')
+        relation_goal = relation_context.get('goal', '')
+        relation_constraints = relation_context.get('constraints', '')
+        
+        # 컨텍스트가 제공된 경우 user_context와 additional_guidelines에 통합
+        if context_prompt or relation_goal or relation_constraints:
+            context_parts = []
+            if context_prompt:
+                context_parts.append(f"문서 컨텍스트: {context_prompt}")
+            if relation_goal:
+                context_parts.append(f"관계 추출 목표: {relation_goal}")
+            if relation_constraints:
+                context_parts.append(f"추출 제약사항: {relation_constraints}")
+            
+            enhanced_context = " | ".join(context_parts)
+            if user_context:
+                user_context = f"{user_context} | {enhanced_context}"
+            else:
+                user_context = enhanced_context
+        
+        # 도메인과 템플릿 정보를 additional_guidelines에 추가
+        if relation_domain != 'general' or relation_template != 'detailed':
+            template_guidance = {
+                'detailed': '관계의 세부사항과 맥락을 포함하여 상세하게 추출',
+                'concise': '핵심적인 관계만을 간결하게 식별',
+                'exploratory': '다양한 관계 유형을 탐색하여 숨겨진 연결점을 발견'
+            }
+            
+            domain_guidance = f"도메인: {relation_domain}"
+            template_desc = template_guidance.get(relation_template, '표준 추출 방식')
+            
+            guidance_text = f"{domain_guidance}, 추출 방식: {template_desc}"
+            if additional_guidelines:
+                additional_guidelines = f"{additional_guidelines} | {guidance_text}"
+            else:
+                additional_guidelines = guidance_text
+        
         # 지식그래프 생성 (Multi-agent 시스템 사용)
         result = kg_generator.generate_knowledge_graph(
             extraction_data=extraction_data,
@@ -1269,5 +1310,116 @@ def api_relations_validate_batch():
         return jsonify({
             "success": False,
             "error": f"API request failed: {str(e)}"
+        }), 500
+
+
+@main_bp.route('/api/knowledge-graph/manual-relation', methods=['POST'])
+def api_add_manual_relation():
+    """
+    수동 관계 추가 API 엔드포인트
+    사용자가 직접 생성한 관계를 지식그래프에 추가
+    """
+    try:
+        data = request.json
+        relation_data = data.get('relation', {})
+        
+        if not relation_data:
+            return jsonify({"error": "relation data is required"}), 400
+            
+        # 필수 필드 검증
+        required_fields = ['from', 'to', 'label']
+        for field in required_fields:
+            if field not in relation_data:
+                return jsonify({"error": f"'{field}' field is required"}), 400
+        
+        current_app.logger.info(f"Adding manual relation: {relation_data['from']} -> {relation_data['to']} ({relation_data['label']})")
+        
+        # 관계 데이터 정규화
+        manual_relation = {
+            'id': relation_data.get('id', f"manual_rel_{int(time.time())}"),
+            'from': relation_data['from'],
+            'to': relation_data['to'],
+            'label': relation_data['label'],
+            'description': relation_data.get('description', ''),
+            'confidence': float(relation_data.get('confidence', 0.9)),
+            'direction': relation_data.get('direction', 'directed'),
+            'manual': True,
+            'created_at': time.time()
+        }
+        
+        # 관계가 유효한지 검증 (간단한 검증)
+        if manual_relation['from'] == manual_relation['to']:
+            return jsonify({"error": "Self-referencing relations are not allowed"}), 400
+            
+        if not manual_relation['label'].strip():
+            return jsonify({"error": "Relation label cannot be empty"}), 400
+            
+        current_app.logger.info("Manual relation added successfully")
+        
+        return jsonify({
+            "success": True,
+            "relation": manual_relation,
+            "message": "Manual relation added successfully"
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Error in manual relation API: {e}", exc_info=True)
+        return jsonify({
+            "success": False,
+            "error": f"Failed to add manual relation: {str(e)}"
+        }), 500
+
+
+@main_bp.route('/api/knowledge-graph/export-with-manual-relations', methods=['POST'])
+def api_export_knowledge_graph_with_manual_relations():
+    """
+    수동 관계가 포함된 지식그래프 내보내기 API
+    """
+    try:
+        data = request.json
+        kg_data = data.get('kg_data', {})
+        manual_relations = data.get('manual_relations', [])
+        export_format = data.get('format', 'json')
+        
+        if not kg_data:
+            return jsonify({"error": "kg_data is required"}), 400
+        
+        current_app.logger.info(f"Exporting knowledge graph with {len(manual_relations)} manual relations")
+        
+        # 원본 지식그래프 데이터에 수동 관계 추가
+        enhanced_kg_data = kg_data.copy()
+        
+        # 기존 관계에 수동 관계 추가
+        existing_relations = enhanced_kg_data.get('relations', [])
+        all_relations = existing_relations + manual_relations
+        enhanced_kg_data['relations'] = all_relations
+        
+        # 통계 업데이트
+        if 'statistics' in enhanced_kg_data:
+            enhanced_kg_data['statistics']['total_relations'] = len(all_relations)
+            enhanced_kg_data['statistics']['manual_relations'] = len(manual_relations)
+        
+        # 메타데이터 추가
+        enhanced_kg_data['export_info'] = {
+            'exported_at': time.time(),
+            'includes_manual_relations': len(manual_relations) > 0,
+            'total_relations': len(all_relations),
+            'manual_relations_count': len(manual_relations)
+        }
+        
+        if export_format == 'json':
+            return jsonify({
+                "success": True,
+                "data": enhanced_kg_data,
+                "format": "json"
+            })
+        else:
+            return jsonify({"error": f"Export format '{export_format}' is not supported"}), 400
+        
+    except Exception as e:
+        current_app.logger.error(f"Error in export knowledge graph API: {e}", exc_info=True)
+        return jsonify({
+            "success": False,
+            "error": f"Export failed: {str(e)}"
         }), 500
 
