@@ -5,6 +5,8 @@
 [![Paper](https://img.shields.io/badge/DOI-10.1093/jamiaopen/ooaf012-red)](https://doi.org/10.1093/jamiaopen/ooaf012)
 [![Website](https://img.shields.io/badge/website-GitHub.io-purple)](https://daviden1013.github.io/llm-ie/)
 
+**English | [한국어](README-KR.md)**
+
 A comprehensive toolkit that provides building blocks for LLM-based named entity recognition, attribute extraction, and relation extraction pipelines. 
 
 | Features | Support |
@@ -14,6 +16,7 @@ A comprehensive toolkit that provides building blocks for LLM-based named entity
 | **Entity Attributes Extraction** | :white_check_mark: Flexible formats |
 | **Relation Extraction (RE)** | :white_check_mark: Binary & Multiclass relations |
 | **Visualization** | :white_check_mark: Web App, Built-in entity & relation visualization |
+| **Batch Processing** | :white_check_mark: Gemini Direct API, Multi-API key support |
 
 ## 🆕Recent Updates
 - [v1.0.0](https://github.com/daviden1013/llm-ie/releases/tag/v1.0.0) (May 15, 2025): 
@@ -26,6 +29,7 @@ A comprehensive toolkit that provides building blocks for LLM-based named entity
 - [v1.2.0](https://github.com/daviden1013/llm-ie/releases/tag/v1.2.0) (Jun 15, 2025): Attribute extractor for complicated attribute schema. 
 - [v1.2.1](https://github.com/daviden1013/llm-ie/releases/tag/v1.2.1) (Jul 12, 2025): Added exporting/importing chat history functionality to the Prompt Editor.
 - [v1.2.2](https://github.com/daviden1013/llm-ie/releases/tag/v1.2.2) (Aug 25, 2025): Added configs for reasoning LLMs (GPT-OSS, Qwen3).
+- **Batch Processing Features Added** (Sep 2025): Gemini Direct API integration and advanced batch processing capabilities.
 
 
 ## 📑Table of Contents
@@ -33,7 +37,8 @@ A comprehensive toolkit that provides building blocks for LLM-based named entity
 - [Prerequisite](#prerequisite)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
-- [Web Applicaton](#web-application)
+- [Web Application](#web-application)
+- [Batch Processing](#batch-processing)
 - [Examples](#examples)
 - [Useful Scripts](#useful-scripts)
 - [User Guide](#user-guide)
@@ -46,7 +51,7 @@ LLM-IE is a toolkit that provides robust information extraction utilities for na
 <div align="center"><img src="docs/readme_img/LLM-IE flowchart.png" width=800 ></div>
 
 ## 🚦Prerequisite
-At least one LLM inference engine is required. There are built-in supports for 🚅 [LiteLLM](https://github.com/BerriAI/litellm), 🦙 [Llama-cpp-python](https://github.com/abetlen/llama-cpp-python), <img src="docs/readme_img/ollama_icon.png" alt="Icon" width="22"/> [Ollama](https://github.com/ollama/ollama), 🤗 [Huggingface_hub](https://github.com/huggingface/huggingface_hub), <img src=docs/readme_img/openai-logomark_white.png width=16 /> [OpenAI API](https://platform.openai.com/docs/api-reference/introduction), and <img src=docs/readme_img/vllm-logo_small.png width=20 /> [vLLM](https://github.com/vllm-project/vllm). For installation guides, please refer to those projects. Other inference engines can be configured through the [InferenceEngine](src/llm_ie/engines.py) abstract class. See [LLM Inference Engine](#llm-inference-engine) section below.
+At least one LLM inference engine is required. There are built-in supports for 🚅 [LiteLLM](https://github.com/BerriAI/litellm), 🦙 [Llama-cpp-python](https://github.com/abetlen/llama-cpp-python), <img src="docs/readme_img/ollama_icon.png" alt="Icon" width="22"/> [Ollama](https://github.com/ollama/ollama), 🤗 [Huggingface_hub](https://github.com/huggingface/huggingface_hub), <img src=docs/readme_img/openai-logomark_white.png width=16 /> [OpenAI API](https://platform.openai.com/docs/api-reference/introduction), <img src=docs/readme_img/vllm-logo_small.png width=20 /> [vLLM](https://github.com/vllm-project/vllm), and **Gemini Direct API**. For installation guides, please refer to those projects. Other inference engines can be configured through the [InferenceEngine](src/llm_ie/engines.py) abstract class. See [LLM Inference Engine](#llm-inference-engine) section below.
 
 ## 💿Installation
 The Python package is available on PyPI. 
@@ -310,6 +315,68 @@ Interface for chatting with Prompt Editor LLM agent.
 
 Stream frame extraction and download outputs.
 ![web_app_frame_extractor](docs/readme_img/web_app_frame_extraction.PNG)
+
+## 🚀Batch Processing
+LLM-IE provides advanced batch processing capabilities for handling large-scale text processing tasks.
+
+### Gemini Direct API Batch Processing
+The web application features specialized batch processing functionality using Google's Gemini API directly:
+
+#### Key Features:
+- **Multi-API Key Support**: Rotate through multiple API keys to avoid rate limits
+- **Chunk-based Processing**: Split large texts into manageable chunks
+- **Real-time Progress Updates**: Stream processing status in real-time
+- **Configurable Parameters**: Adjust chunk size, overlap, batch size, delays, and more
+- **Robust Error Handling**: Built-in error handling and retry mechanisms
+
+#### Using Batch Processing in Web UI:
+1. **Enable Batch Processing**: Check the "Enable Batch Processing" checkbox in the Frame Extraction page
+2. **Select Batch Type**: Choose between "Gemini Direct" or "LLM-IE Compatible"
+3. **Configure API Keys**: Enter multiple API keys, one per line
+4. **Set Parameters**:
+   - **Chunk Size**: Number of characters per chunk (default: 1000)
+   - **Overlap Size**: Number of overlapping characters between chunks (default: 100)
+   - **Batch Size**: Number of chunks to process simultaneously (default: 5)
+   - **Delay Between Batches**: Wait time between batches in seconds (default: 2.0)
+
+#### Example Configuration:
+```
+API Keys:
+AIzaSyC1234567890abcdef...
+AIzaSyD0987654321fedcba...
+
+Chunk Size: 1500
+Overlap Size: 150
+Batch Size: 3
+Delay Between Batches: 1.5 seconds
+```
+
+### Programmatic Batch Processing
+To use batch processing in Python code:
+
+```python
+from web_app.app.batch_services import BatchProcessor
+from web_app.app.gemini_direct_engine import GeminiDirectBatchProcessor
+
+# LLM-IE Compatible Batch Processing
+llm_config = {"api_type": "openai_compatible", "model": "gpt-4"}
+api_keys = ["key1", "key2", "key3"]
+batch_processor = BatchProcessor(llm_config, api_keys)
+
+# Gemini Direct Batch Processing
+gemini_config = {
+    'gemini_model': 'gemini-2.0-flash',
+    'temperature': 0.2,
+    'max_tokens': 4096
+}
+gemini_processor = GeminiDirectBatchProcessor(api_keys, gemini_config)
+```
+
+### Performance Optimization
+- **API Key Rotation**: Use multiple keys to avoid rate limits
+- **Chunk Size Tuning**: Adjust to fit model's context window
+- **Batch Size Optimization**: Balance processing speed with resource usage
+- **Delay Configuration**: Set delays between batches to comply with API limits
 
 ## 📘Examples
   - [Interactive chat with LLM prompt editors](demo/prompt_template_writing_via_chat.ipynb)

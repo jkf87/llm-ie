@@ -1,0 +1,682 @@
+{
+    "doc_id": "downloaded_extraction",
+    "text": "You: \uadf8\ub2c8\uae4c \uc774 \ub17c\ubb38\uc740 ai\uc758 \uc131\uaca9\ud2b9\uc131\uc744 \ubd84\uc11d\ud574\ubcf8\uac70\ub124? \ubc18\ub300\ub85c agent\uc5d0\uac8c \uc131\uaca9\ud2b9\uc131\uc744 \ubd80\uc5ec\ud558\uace0 \uc774\ub97c \uc2e4\uc81c\ub85c \ube44\uc2b7\ud558\uac8c \ubaa8\uc0ac\ud558\ub294\uc9c0 \ud14c\uc2a4\ud2b8\ud558\ub294 \uc5f0\uad6c\ub97c \ud574\ubcf4\uace0\uc2f6\uc740\ub370 \uc9c0\uae08 \ub17c\ubb38\uc5d0\uc11c \uc2dc\uc0ac\ud560\ub9cc\ud55c\uac8c \uc788\uc744\uae4c?\n\n---\nMoonlight: \ub124, \ub9de\uc2b5\ub2c8\ub2e4! \uc774 \ub17c\ubb38\uc740 Llama2, GPT4, Mixtral\uacfc \uac19\uc740 LLM\ub4e4\uc774 \uc5b4\ub5a0\ud55c \"\uc131\uaca9\"\uc744 \uc2dc\ubbac\ub808\uc774\uc158\ud558\ub294\uc9c0, \uadf8\ub9ac\uace0 \uadf8 \uc131\uaca9\uc774 \ud504\ub86c\ud504\ud2b8\ub098 \uc628\ub3c4(temperature) \uc124\uc815\uc5d0 \ub530\ub77c \uc5bc\ub9c8\ub098 \uc548\uc815\uc801\uc778\uc9c0\ub97c IPIP-NEO-120 \uc124\ubb38\uc9c0\ub97c \ud1b5\ud574 \ubd84\uc11d\ud55c \uc5f0\uad6c\uc785\ub2c8\ub2e4. LLM\uc774 \uc2a4\uc2a4\ub85c \uc751\ub2f5\ud558\ub294 \ubc29\uc2dd\uc744 \ud1b5\ud574 \"\ub0b4\uc7ac\ub41c\" \uc131\uaca9 \ud504\ub85c\ud30c\uc77c\uc744 \ud30c\uc545\ud558\ub824 \ud55c \uac83\uc774\uc8e0.\n\n\uc0ac\uc6a9\uc790\ub2d8\uaed8\uc11c \uc81c\uc548\ud558\uc2e0 **\"\uc5d0\uc774\uc804\ud2b8\uc5d0\uac8c \uc131\uaca9 \ud2b9\uc131\uc744 \ubd80\uc5ec\ud558\uace0, \uc774\ub97c \uc2e4\uc81c\ub85c \ube44\uc2b7\ud558\uac8c \ubaa8\uc0ac\ud558\ub294\uc9c0 \ud14c\uc2a4\ud2b8\ud558\ub294 \uc5f0\uad6c\"**\ub294 \uc774 \ub17c\ubb38\uc5d0\uc11c \ub098\uc544\uac00\uace0\uc790 \ud558\ub294 **\ub9e4\uc6b0 \uc911\uc694\ud558\uace0 \ud765\ubbf8\ub85c\uc6b4 \ub2e4\uc74c \ub2e8\uacc4\uc758 \uc5f0\uad6c**\uc785\ub2c8\ub2e4. \uc774 \ub17c\ubb38\uc740 \uadf8\ub7ec\ud55c \uc5f0\uad6c\ub97c \uc704\ud55c \ud6cc\ub96d\ud55c \uae30\ubc18\uacfc \uc5ec\ub7ec \uc2dc\uc0ac\uc810\uc744 \uc81c\uacf5\ud569\ub2c8\ub2e4.\n\n\ub2e4\uc74c\uc740 \uc774 \ub17c\ubb38\uc774 \uc0ac\uc6a9\uc790\ub2d8\uc758 \uc5f0\uad6c \uc544\uc774\ub514\uc5b4\uc5d0 \uc2dc\uc0ac\ud560 \uc218 \uc788\ub294 \uba87 \uac00\uc9c0 \ud575\uc2ec \ub0b4\uc6a9\ub4e4\uc785\ub2c8\ub2e4:\n\n1.  **\ud504\ub86c\ud504\ud2b8\uc758 \uc911\uc694\uc131 ($ \\text{Prompt Engineering}$):**\n    *   \uc774 \ub17c\ubb38\uc740 \"Answer as if you were a person.\"\uacfc \uac19\uc740 \uc544\uc8fc **\uc0ac\uc18c\ud55c \ud504\ub86c\ud504\ud2b8 \ubcc0\uacbd**\ub9cc\uc73c\ub85c\ub3c4 Llama2\uac00 \ub2f5\ubcc0\uc744 \uac70\ubd80\ud558\ub294 \ub300\uc2e0 \uc751\ub2f5\ud558\ub3c4\ub85d \ub9cc\ub4e4\uc5c8\uc74c\uc744 \ubcf4\uc5ec\uc90d\ub2c8\ub2e4. \uc774\ub294 LLM\uc774 \ud2b9\uc815 \ud398\ub974\uc18c\ub098\ub97c \ucc44\ud0dd\ud558\ub3c4\ub85d \uc720\ub3c4\ud558\ub294 \ud504\ub86c\ud504\ud2b8\uc758 \uac15\ub825\ud55c \uc601\ud5a5\ub825\uc744 \uc2dc\uc0ac\ud569\ub2c8\ub2e4.\n    *   \uc11c\ub860\uc5d0\uc11c \uc778\uc6a9\ud55c Jiang et al. (2023)\uc758 \uc5f0\uad6c\ub3c4 \"\ud504\ub86c\ud504\ud2b8\uc5d0 \ub9e5\ub77d\uc744 \uc81c\uacf5\ud568\uc73c\ub85c\uc368, LLM\uc774 \ubaa9\ud45c\ub85c \ud558\ub294 Big5 \ud2b9\uc131\uc744 \ub354\uc6b1 \uac15\ud558\uac8c \ud45c\ud604\ud558\ub3c4\ub85d \uc720\uc758\ubbf8\ud558\uac8c \uc720\ub3c4\ud560 \uc218 \uc788\uc5c8\ub2e4\"\uace0 \uc5b8\uae09\ud558\uace0 \uc788\uc2b5\ub2c8\ub2e4. \uc774\ub294 \uc0ac\uc6a9\uc790\ub2d8\uc758 \uc5f0\uad6c\uc5d0\uc11c **\ud2b9\uc815 \uc131\uaca9 \ud2b9\uc131\uc744 LLM\uc5d0 \"\uc8fc\uc785\"\ud558\ub294 \uc8fc\uc694 \ubc29\ubc95\ub860**\uc774 \ub420 \uc218 \uc788\uc2b5\ub2c8\ub2e4. \uc989, LLM\uc5d0 \"\ub2f9\uc2e0\uc740 \uc678\ud5a5\uc801\uc774\uace0 \uc131\uc2e4\ud55c \uc0ac\ub78c\uc774\ub77c\uace0 \uac00\uc815\ud558\uace0 \uc774 \uc9c8\ubb38\uc5d0 \ub2f5\ud558\uc2dc\uc624\"\uc640 \uac19\uc740 \uc9c0\uc2dc\ub97c \uba85\uc2dc\uc801\uc73c\ub85c \uc8fc\uac70\ub098, \uba87 \uac00\uc9c0 \uc608\uc2dc\ub97c \uc81c\uacf5\ud558\uc5ec \uc131\uaca9 \ud2b9\uc131\uc744 \ud559\uc2b5\uc2dc\ud0a4\ub294 \ubc29\ubc95\uc744 \ud0d0\uc0c9\ud574\ubcfc \uc218 \uc788\uc2b5\ub2c8\ub2e4.\n\n2.  **\ubaa8\ub378 \uac04\uc758 \ucc28\uc774\uc640 \uc801\ud569\uc131:**\n    *   GPT4\ub294 \uc678\ud5a5\uc131(Extraversion)\uc774 \ub192\uace0, Llama2\ub294 \uc911\ub9bd\uc801\uc778 \ud504\ub85c\ud30c\uc77c\uc5d0 \uc2e0\uacbd\uc131(Neuroticism)\uc774 \ub2e4\uc18c \ub192\uc73c\uba70, Mixtral\uc740 \uac1c\ubc29\uc131(Openness), \uc6b0\ud638\uc131(Agreeableness), \uc131\uc2e4\uc131(Conscientiousness)\uc774 \ub192\uc740 \ub4f1, \ubaa8\ub378\ub9c8\ub2e4 **\uace0\uc720\ud55c \ubca0\uc774\uc2a4\ub77c\uc778 \uc131\uaca9 \ud504\ub85c\ud30c\uc77c**\uc744 \ubcf4\uc600\uc2b5\ub2c8\ub2e4.\n    *   \uc774\ub294 \ud2b9\uc815 \uc131\uaca9 \ud2b9\uc131\uc744 \ubaa8\uc0ac\ud558\ub3c4\ub85d \ud560 \ub54c, \uc5b4\ub5a4 LLM\uc774 \ud2b9\uc815 \ud2b9\uc131\uc744 \ub354 \uc798 \ubc1c\ud604\ud558\uac70\ub098 \ud559\uc2b5\ud558\uae30 \uc26c\uc6b8\uc9c0\uc5d0 \ub300\ud55c \ucd08\uae30 \uac00\uc774\ub4dc\ub77c\uc778\uc744 \uc81c\uacf5\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4. \uc608\ub97c \ub4e4\uc5b4, \uc678\ud5a5\uc801\uc778 \uc5d0\uc774\uc804\ud2b8\ub97c \ub9cc\ub4e4\ub824\uba74 GPT4 \uacc4\uc5f4\uc774 \uc88b\uc740 \uc2dc\uc791\uc810\uc774 \ub420 \uc218 \uc788\uc74c\uc744 \uc2dc\uc0ac\ud569\ub2c8\ub2e4.\n\n3.  **\uc548\uc815\uc131(Stability)\uc758 \ud3c9\uac00:**\n    *   \ub17c\ubb38\uc740 \uc628\ub3c4(temperature) \ud30c\ub77c\ubbf8\ud130 \ubcc0\ud654\uc640 \ud504\ub86c\ud504\ud2b8 \ubcc0\ud615\uc5d0 \ub530\ub978 \uc131\uaca9 \ud2b9\uc131\uc758 \uc548\uc815\uc131\uc744 \ud0d0\uc0c9\ud588\uc2b5\ub2c8\ub2e4. \uc0ac\uc6a9\uc790\ub2d8\uc758 \uc5f0\uad6c\uc5d0\uc11c \"\ubd80\uc5ec\ub41c\" \uc131\uaca9 \ud2b9\uc131\uc774 \uc77c\uad00\uc131 \uc788\uac8c \uc720\uc9c0\ub418\ub294\uc9c0, \uc989 **\uc7a5\uae30\uc801\uc778 \uc0c1\ud638\uc791\uc6a9\uc774\ub098 \ub2e4\uc591\ud55c \uc0c1\ud669\uc5d0\uc11c\ub3c4 \ud560\ub2f9\ub41c \uc131\uaca9\uc744 \uafb8\uc900\ud788 \ubaa8\uc0ac\ud558\ub294\uc9c0**\ub97c \ud3c9\uac00\ud558\ub294 \uac83\uc774 \uc911\uc694\ud560 \uac83\uc785\ub2c8\ub2e4.\n    *   \uc774 \ub17c\ubb38\uc5d0\uc11c\ub294 \uc628\ub3c4 \ubcc0\ud654\uc758 \ud6a8\uacfc\uc5d0 \ub300\ud574 \"\uacb0\ub860\uc801\uc778 \uc9c4\uc220\uc744 \ub0b4\ub9ac\uae30 \uc5b4\ub835\ub2e4\"\uace0 \ud588\uc9c0\ub9cc, \ud504\ub86c\ud504\ud2b8\uc758 \uc791\uc740 \ubcc0\ud654\ub294 \ubaa8\ub4e0 \ubaa8\ub378\uc5d0 \uc601\ud5a5\uc744 \ubbf8\uce5c\ub2e4\uace0 \uc5b8\uae09\ud588\uc2b5\ub2c8\ub2e4. \uc774\ub294 \uc131\uaca9 \ubd80\uc5ec\uc5d0 \uc788\uc5b4 \ud504\ub86c\ud504\ud2b8\uc758 \uc124\uacc4\uac00 \uc628\ub3c4 \uc870\uc808\ubcf4\ub2e4 \ub354 \uadfc\ubcf8\uc801\uc778 \uc601\ud5a5\uc744 \ubbf8\uce60 \uc218 \uc788\uc74c\uc744 \uc2dc\uc0ac\ud569\ub2c8\ub2e4.\n\n4.  **\uc778\uac04-\ucef4\ud4e8\ud130 \uc0c1\ud638\uc791\uc6a9 (HCI) \ubc0f \uac1c\uc778\ud654\uc5d0 \ub300\ud55c \ud568\uc758:**\n    *   \ub17c\ubb38\uc740 LLM\uc774 \uc5d0\uc774\uc804\uc2dc(agency)\ub97c \uac00\uc9c0\uc9c0 \uc54a\uc9c0\ub9cc, \"\uc778\uc9c0\ub41c \uc131\uaca9(perceived personalities)\uc774 \uc0ac\uc6a9\uc790 \uc0c1\ud638\uc791\uc6a9 \uc911 \ud6a8\ub2a5\uacfc \uc0ac\uc6a9\uc790 \uacbd\ud5d8\uc5d0 \uc9c0\ub300\ud55c \uc601\ud5a5\uc744 \ubbf8\uce60 \uc218 \uc788\ub2e4\"\uace0 \uac15\uc870\ud569\ub2c8\ub2e4. \uc0ac\uc6a9\uc790\ub2d8\uc758 \uc5f0\uad6c\ub294 \uc774\ub7ec\ud55c \"\uc778\uc9c0\ub41c \uc131\uaca9\"\uc744 **\uc758\ub3c4\uc801\uc73c\ub85c \uc124\uacc4\ud558\uace0 \uc81c\uc5b4**\ud560 \uc218 \uc788\ub294 \uac00\ub2a5\uc131\uc744 \ud0d0\uc0c9\ud558\ub294 \uac83\uc774\ubbc0\ub85c, \uac1c\uc778\ud654\ub41c \uc5d0\uc774\uc804\ud2b8 \uac1c\ubc1c\uc5d0 \ub9e4\uc6b0 \uc9c1\uc811\uc801\uc778 \uae30\uc5ec\ub97c \ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.\n\n### \uc0c8\ub85c\uc6b4 \uc5f0\uad6c \uc9c8\ubb38 \ubc0f \ubc29\ud5a5 \uc81c\uc548:\n\n\uc0ac\uc6a9\uc790\ub2d8\uc758 \uc5f0\uad6c \uc544\uc774\ub514\uc5b4\ub97c \ub354\uc6b1 \uad6c\uccb4\ud654\ud558\uace0 \uc2ec\ud654\ud558\uae30 \uc704\ud55c \uba87 \uac00\uc9c0 \uc9c8\ubb38\uc744 \ub4dc\ub824\ubd05\ub2c8\ub2e4.\n\n*   **\uc131\uaca9 \ud2b9\uc131 \ubd80\uc5ec \ubc29\ubc95\ub860:**\n    *   **\uba85\uc2dc\uc801 \uc9c0\uc2dc ($ \\text{Explicit Instruction}$):** \"\ub2f9\uc2e0\uc740 \ub9e4\uc6b0 \uc678\ud5a5\uc801\uc774\uace0 \ub099\uad00\uc801\uc778 \uc0c1\ub2f4\uc0ac\uc785\ub2c8\ub2e4.\"\uc640 \uac19\uc740 \uc9c0\uc2dc\uac00 \uc131\uaca9 \ubaa8\uc0ac\uc5d0 \uc5bc\ub9c8\ub098 \ud6a8\uacfc\uc801\uc778\uac00\uc694?\n    *   **\ud398\ub974\uc18c\ub098 \uc124\uba85 ($ \\text{Persona Description}$):** \ud2b9\uc815 \ubc30\uacbd \uc774\uc57c\uae30\ub098 \uc9c1\uc5c5(\uc608: \"\ud65c\ubc1c\ud55c \uc720\uce58\uc6d0 \uc120\uc0dd\ub2d8\")\uc744 \ubd80\uc5ec\ud558\ub294 \uac83\uc774 \ub354 \ubbf8\ubb18\ud558\uace0 \uc77c\uad00\ub41c \uc131\uaca9 \ubaa8\uc0ac\ub97c \uc774\ub04c\uc5b4\ub0bc \uc218 \uc788\uc744\uae4c\uc694?\n    *   **\uba87 \uac00\uc9c0 \uc608\uc2dc \ud559\uc2b5 ($ \\text{Few-shot Learning}$):** \ud2b9\uc815 \uc131\uaca9\uc758 \uc778\ubb3c\uc774 \uc751\ub2f5\ud55c \ub300\ud654 \uc608\uc2dc\ub97c LLM\uc5d0\uac8c \uc81c\uacf5\ud558\uba74, \ud574\ub2f9 \uc131\uaca9\uc744 \ub354 \uc815\ud655\ud558\uac8c \ubaa8\uc0ac\ud560 \uc218 \uc788\uc744\uae4c\uc694? \uac01 \ubc29\ubc95\ub860\uc758 \uc7a5\ub2e8\uc810\uc740 \ubb34\uc5c7\uc774\uba70, \uc5b4\ub5a4 \uc870\ud569\uc774 \uac00\uc7a5 \ud6a8\uacfc\uc801\uc77c\uae4c\uc694?\n\n*   **\uc131\uaca9 \ubaa8\uc0ac \ucda9\uc2e4\ub3c4 \ubc0f \uc77c\uad00\uc131 \ud3c9\uac00 ($ \\text{Fidelity and Consistency Assessment}$):**\n    *   LLM\uc5d0 \ud2b9\uc815 \uc131\uaca9\uc744 \ubd80\uc5ec\ud588\uc744 \ub54c, \uadf8 \uacb0\uacfc\ubb3c\uc774 IPIP-NEO-120\uacfc \uac19\uc740 \ud45c\uc900\ud654\ub41c \uc124\ubb38\uc9c0\ub85c \uce21\uc815\ud588\uc744 \ub54c **\ubaa9\ud45c \uc131\uaca9\uacfc \uc5bc\ub9c8\ub098 \uc77c\uce58**\ud558\ub294\uac00\uc694? \uc815\ub7c9\uc801\uc778 \uc9c0\ud45c\ub85c \uc5b4\ub5bb\uac8c \ud3c9\uac00\ud560 \uc218 \uc788\uc744\uae4c\uc694?\n    *   \ub2e4\uc591\ud55c \uc0c1\ud669\uc774\ub098 \uc5ec\ub7ec \ubc88\uc758 \uc0c1\ud638\uc791\uc6a9\uc5d0\uc11c LLM\uc774 \ubd80\uc5ec\ub41c \uc131\uaca9\uc744 **\uc5bc\ub9c8\ub098 \uc77c\uad00\uc131 \uc788\uac8c \uc720\uc9c0**\ud558\ub294\uac00\uc694? \ud2b9\uc815 \uc0c1\ud669\uc5d0\uc11c \"\uc131\uaca9 \ubd95\uad34\"\uac00 \ubc1c\uc0dd\ud558\ub294 \uc9c0\uc810\uc740 \uc5b4\ub514\uc77c\uae4c\uc694?\n\n*   **\uc0ac\uc6a9\uc790 \uc778\uc2dd (User Perception):**\n    *   \uc778\uac04 \uc0ac\uc6a9\uc790\ub4e4\uc774 \ubd80\uc5ec\ub41c \uc131\uaca9\uc744 \uc2e4\uc81c\ub85c \uadf8\ub807\uac8c **\uc778\uc9c0**\ud558\ub294\uac00\uc694? \uc608\ub97c \ub4e4\uc5b4, \"\ud65c\ubc1c\ud55c\" \uc131\uaca9\uc744 \ubd80\uc5ec\ubc1b\uc740 \uc5d0\uc774\uc804\ud2b8\uc5d0 \ub300\ud574 \uc0ac\uc6a9\uc790\ub4e4\uc774 \"\uc815\ub9d0 \ud65c\ubc1c\ud558\uac8c \ub290\uaef4\uc9c4\ub2e4\"\uace0 \uc751\ub2f5\ud558\ub294\uc9c0 \uc0ac\uc6a9\uc790 \uc2e4\ud5d8\uc744 \ud1b5\ud574 \uac80\uc99d\ud560 \uc218 \uc788\uc744\uae4c\uc694? LLM\uc758 \uce21\uc815 \uacb0\uacfc\uc640 \uc778\uac04\uc758 \uc778\uc2dd \uc0ac\uc774\uc5d0 \ubd88\uc77c\uce58\uac00 \uc788\ub2e4\uba74 \uadf8 \uc6d0\uc778\uc740 \ubb34\uc5c7\uc77c\uae4c\uc694?\n\n*   **\ud30c\uc778\ud29c\ub2dd ($ \\text{Fine-tuning}$ vs. $ \\text{Prompting}$):**\n    *   \ud504\ub86c\ud504\ud2b8 \uc5d4\uc9c0\ub2c8\uc5b4\ub9c1\ub9cc\uc73c\ub85c \uc131\uaca9\uc744 \ubd80\uc5ec\ud558\ub294 \uac83\uacfc, \ud2b9\uc815 \uc131\uaca9 \ub370\uc774\ud130\uc14b\uc73c\ub85c LLM\uc744 \ud30c\uc778\ud29c\ub2dd\ud558\ub294 \uac83 \uc911 \uc5b4\ub290 \uac83\uc774 \ub354 \uc815\uad50\ud558\uace0 \uc548\uc815\uc801\uc778 \uc131\uaca9 \ubaa8\uc0ac\ub97c \uac00\ub2a5\ud558\uac8c \ud560\uae4c\uc694? \ub450 \uc811\uadfc \ubc29\uc2dd\uc758 \uc870\ud569\uc740 \uc5b4\ub5a8\uae4c\uc694?\n\n*   **\uc724\ub9ac\uc801 \uace0\ub824\uc0ac\ud56d (Ethical Considerations):**\n    *   LLM\uc5d0 \uc131\uaca9\uc744 \ubd80\uc5ec\ud558\ub294 \uac83\uc740 \uc0ac\uc6a9\uc790\uc5d0\uac8c \uc5b4\ub5a4 \uc601\ud5a5\uc744 \ubbf8\uce60 \uc218 \uc788\uc744\uae4c\uc694? \uc608\ub97c \ub4e4\uc5b4, \ud2b9\uc815 \uc131\uaca9\uc774 \ud3b8\ud5a5\ub418\uac70\ub098 \uc870\uc791\uc801\uc73c\ub85c \ub290\uaef4\uc9c8 \uc704\ud5d8\uc740 \uc5c6\uc744\uae4c\uc694? \ucc45\uc784\uac10 \uc788\ub294 AI \uc5d0\uc774\uc804\ud2b8 \uc124\uacc4\ub97c \uc704\ud574 \uc5b4\ub5a4 \uac00\uc774\ub4dc\ub77c\uc778\uc774 \ud544\uc694\ud560\uae4c\uc694?\n\n\n---\n\n\ub124, \uc0ac\uc6a9\uc790\ub2d8\uc758 \uc9c8\ubb38\uc740 \ub9e4\uc6b0 \ud765\ubbf8\ub86d\uace0 \uc911\uc694\ud55c \uc5f0\uad6c \ubc29\ud5a5\uc744 \uc81c\uc2dc\ud569\ub2c8\ub2e4. \uc9c8\ubb38\ud558\uc2e0 \"\uc778\uac04\uc758 BFI(Big Five Inventory)\ub97c LLM\uc73c\ub85c \uc2dc\ubbac\ub808\uc774\uc158\ud55c \uc5f0\uad6c\"\ub294 \ud06c\uac8c \ub450 \uac00\uc9c0 \uad00\uc810\uc5d0\uc11c \uc0dd\uac01\ud574\ubcfc \uc218 \uc788\uc2b5\ub2c8\ub2e4.\n\n1.  **LLM\uc774 \uc778\uac04\uc758 \ud14d\uc2a4\ud2b8\ub97c \ubd84\uc11d\ud558\uc5ec \uadf8 \uc0ac\ub78c\uc758 BFI\ub97c \uc608\uce21\ud558\uac70\ub098 \ucd94\ub860\ud558\ub294 \uc5f0\uad6c:**\n    *   \uc774 \ub17c\ubb38 \uc790\uccb4\ub294 LLM\uc774 **\uc2a4\uc2a4\ub85c** Big Five \ud14c\uc2a4\ud2b8\uc5d0 \uc751\ub2f5\ud558\uba70 \uc5b4\ub5a4 \uc131\uaca9 \ud504\ub85c\ud30c\uc77c\uc744 \ubcf4\uc774\ub294\uc9c0\ub97c \ubd84\uc11d\ud569\ub2c8\ub2e4. \uc989, LLM\uc774 '\ud14c\uc2a4\ud2b8 \ub300\uc0c1'\uc774 \ub41c \uac83\uc774\uc8e0. \ub530\ub77c\uc11c \uc774 \ub17c\ubb38\uc740 LLM\uc744 \ud1b5\ud574 '\uc778\uac04\uc758' BFI\ub97c '\uc608\uce21'\ud558\ub294 \uc5f0\uad6c\ub294 \uc544\ub2d9\ub2c8\ub2e4.\n    *   \ud558\uc9c0\ub9cc **\uacc4\uc0b0 \uc0ac\ud68c\uacfc\ud559(Computational Social Science)** \ubc0f **\ub514\uc9c0\ud138 \uc2ec\ub9ac\ud559(Digital Psychology)** \ubd84\uc57c\uc5d0\uc11c\ub294 \uc624\ub798\uc804\ubd80\ud130 NLP \uae30\uc220\uc744 \ud65c\uc6a9\ud558\uc5ec \uc18c\uc15c \ubbf8\ub514\uc5b4 \ud14d\uc2a4\ud2b8, \uc5d0\uc138\uc774, \uc628\ub77c\uc778 \ub300\ud654 \ub4f1\uc5d0\uc11c \uac1c\uc778\uc758 \uc131\uaca9 \ud2b9\uc131\uc744 \ucd94\ub860\ud558\ub294 \uc5f0\uad6c\uac00 \ud65c\ubc1c\ud788 \uc9c4\ud589\ub418\uc5b4 \uc654\uc2b5\ub2c8\ub2e4. \ucd5c\uadfc\uc5d0\ub294 LLM\uc758 \uac15\ub825\ud55c \ud14d\uc2a4\ud2b8 \uc774\ud574 \ubc0f \uc0dd\uc131 \ub2a5\ub825\uc744 \ud65c\uc6a9\ud558\uc5ec \uc774\ub7ec\ud55c \ucd94\ub860\uc758 \uc815\ud655\ub3c4\ub97c \ub192\uc774\ub824\ub294 \uc2dc\ub3c4\ub4e4\uc774 \ub9ce\uc774 \uc774\ub8e8\uc5b4\uc9c0\uace0 \uc788\uc2b5\ub2c8\ub2e4.\n    *   \uc608\ub97c \ub4e4\uc5b4, \ud2b9\uc815 \uc0ac\uc6a9\uc790\uc758 \uacfc\uac70 \ubc1c\ud654 \ub370\uc774\ud130\ub97c LLM\uc5d0 \uc785\ub825\ud558\uc5ec \ud574\ub2f9 \uc0ac\uc6a9\uc790\uc758 \uc131\uaca9 \ud504\ub85c\ud30c\uc77c\uc744 \ubd84\uc11d\ud558\uace0, \uc774\ub97c \ud1b5\ud574 BFI \uc810\uc218\ub97c \uc608\uce21\ud558\ub294 \uc5f0\uad6c\ub4e4\uc774 \uc874\uc7ac\ud569\ub2c8\ub2e4. \uc774\ub294 LLM\uc774 \ub2e8\uc21c\ud788 \ud14d\uc2a4\ud2b8 \ud328\ud134\uc744 \ub118\uc5b4 '\ub0b4\uc7ac\ub41c \uc2ec\ub9ac\uc801 \ud2b9\uc131'\uc744 \ud3ec\ucc29\ud560 \uc218 \uc788\ub294\uc9c0\ub97c \ud0d0\uad6c\ud558\ub294 \ubc29\ud5a5\uc785\ub2c8\ub2e4. \uc774\ub7ec\ud55c \uc5f0\uad6c\ub4e4\uc740 \uc8fc\ub85c \ud14d\uc2a4\ud2b8 \ud2b9\uc9d5(\ub2e8\uc5b4 \uc0ac\uc6a9, \ubb38\uc7a5 \uad6c\uc870, \uac10\uc131 \ub4f1)\uacfc \uc2ec\ub9ac \uce21\uc815\ud559(psychometrics)\uc801 \uc9c0\ud45c \uac04\uc758 \uc0c1\uad00\uad00\uacc4\ub97c \ud0d0\uc0c9\ud569\ub2c8\ub2e4.\n\n2.  **LLM\uc774 \ud2b9\uc815 \uc778\uac04\uc758 BFI \ud504\ub85c\ud30c\uc77c\uc744 '\ubaa8\ubc29'\ud558\uac70\ub098 '\uc7ac\ud604'\ud558\ub3c4\ub85d \uc124\uacc4\ud558\ub294 \uc5f0\uad6c:**\n    *   \uc774\uac83\uc740 \uc0ac\uc6a9\uc790\ub2d8\uaed8\uc11c \uc774\uc804\uc5d0 \uc81c\uc548\ud558\uc168\ub358 \"\uc5d0\uc774\uc804\ud2b8\uc5d0\uac8c \uc131\uaca9 \ud2b9\uc131\uc744 \ubd80\uc5ec\ud558\uace0 \uc774\ub97c \uc2e4\uc81c\ub85c \ube44\uc2b7\ud558\uac8c \ubaa8\uc0ac\ud558\ub294\uc9c0 \ud14c\uc2a4\ud2b8\ud558\ub294 \uc5f0\uad6c\"\uc640 \ubc00\uc811\ud558\uac8c \uc5f0\uacb0\ub429\ub2c8\ub2e4. LLM\uc774 \ub9c8\uce58 \ud2b9\uc815 BFI\ub97c \uac00\uc9c4 \uc0ac\ub78c\ucc98\ub7fc \ub9d0\ud558\uace0 \ud589\ub3d9\ud558\ub3c4\ub85d \ub9cc\ub4dc\ub294 \uac83\uc774\uc8e0.\n    *   \uc774 \ub17c\ubb38\uc5d0\uc11c \uc778\uc6a9\ud55c Serapio-Garcia et al. (2023)\uc774\ub098 Jiang et al. (2023)\uacfc \uac19\uc740 \uc5f0\uad6c\ub4e4\uc740 LLM\uc5d0 \ud2b9\uc815 Big Five \ud2b9\uc131(\uc608: \ub192\uc740 \uc678\ud5a5\uc131)\uc744 '\uc720\ub3c4(induce)'\ud558\uac70\ub098 '\ud0c0\uac9f\ud305(target)'\ud558\uc5ec, LLM\uc774 \uadf8\ub7ec\ud55c \uc131\uaca9\uc744 '\ud45c\ud604(expression)'\ud558\ub3c4\ub85d \ub9cc\ub4dc\ub294 \ubc29\ubc95\uc744 \ud0d0\uad6c\ud588\uc2b5\ub2c8\ub2e4. \uc774\ub294 \uc77c\ubc18\uc801\uc778 \uc131\uaca9 \ud2b9\uc131\uc744 LLM\uc5d0 \uc8fc\uc785\ud558\ub294 \ucd08\uae30 \ub2e8\uacc4\ub77c\uace0 \ubcfc \uc218 \uc788\uc2b5\ub2c8\ub2e4.\n    *   \uc774\ub7ec\ud55c \uc5f0\uad6c\ub4e4\uc740 \ud2b9\uc815 '\uc778\uac04'\uc758 BFI \ud504\ub85c\ud30c\uc77c\uc744 \uc815\ud655\ud788 \ubaa8\uc0ac\ud558\uae30\ubcf4\ub2e4\ub294, '\uc77c\ubc18\uc801\uc73c\ub85c' \uc678\ud5a5\uc801\uc778 \uc0ac\ub78c, '\uc77c\ubc18\uc801\uc73c\ub85c' \uc131\uc2e4\ud55c \uc0ac\ub78c\uc774 \uc5b4\ub5bb\uac8c \ub9d0\ud560\uc9c0\ub97c LLM\uc774 \uc2dc\ubbac\ub808\uc774\uc158\ud558\ub3c4\ub85d \ub9cc\ub4dc\ub294 \ub370 \uc911\uc810\uc744 \ub461\ub2c8\ub2e4.\n\n\uc694\uc57d\ud558\uc790\uba74, \uc774 \ub17c\ubb38\uc740 LLM\uc774 '\uc790\uccb4\uc801\uc73c\ub85c' \uc5b4\ub5a4 \uc131\uaca9\uc744 \uac00\uc9c0\ub294\uc9c0\ub97c \ubcf4\uc558\uc9c0\ub9cc, LLM\uc744 \ud65c\uc6a9\ud558\uc5ec '\uc778\uac04\uc758' BFI\ub97c \uc608\uce21\ud558\uac70\ub098 \ud2b9\uc815 \uc778\uac04\uc758 BFI\ub97c \ubaa8\ubc29\ud558\ub3c4\ub85d \ud558\ub294 \uc5f0\uad6c\ub294 \uacc4\uc0b0 \uc2ec\ub9ac\ud559, AI \ud398\ub974\uc18c\ub098 \uc5f0\uad6c \ub4f1 \ub2e4\uc591\ud55c \ubd84\uc57c\uc5d0\uc11c \ud65c\ubc1c\ud788 \uc9c4\ud589\ub418\uace0 \uc788\ub294 \uc911\uc694\ud55c \uc601\uc5ed\uc785\ub2c8\ub2e4.\n\n### \ucd94\uac00\uc801\uc778 \uc9c8\ubb38\uacfc \uc5f0\uad6c \ubc29\ud5a5 \uc81c\uc548:\n\n\uc0ac\uc6a9\uc790\ub2d8\uc758 \uc544\uc774\ub514\uc5b4\uc5d0 \uae30\ubc18\ud558\uc5ec \ub2e4\uc74c\uacfc \uac19\uc740 \uc5f0\uad6c \uc9c8\ubb38\uc744 \ub354 \uc0dd\uac01\ud574\ubcfc \uc218 \uc788\uc2b5\ub2c8\ub2e4:\n\n*   **BFI \uc608\uce21\uc758 \uc2e0\ub8b0\ub3c4 \ubc0f \ud574\uc11d \uac00\ub2a5\uc131 ($ \\text{Reliability and Interpretability of BFI Prediction}$):**\n    *   LLM\uc774 \uc778\uac04 \ud14d\uc2a4\ud2b8\ub85c\ubd80\ud130 BFI\ub97c \uc608\uce21\ud560 \ub54c, \uadf8 \uc608\uce21 \uacb0\uacfc\ub294 \uc804\ud1b5\uc801\uc778 \uc2ec\ub9ac \uce21\uc815\ud559\uc801 \ubc29\ubc95(\uc124\ubb38\uc9c0 \ub4f1)\uacfc \uc5bc\ub9c8\ub098 \ub192\uc740 \uc0c1\uad00\uad00\uacc4\ub97c \ubcf4\uc774\ub294\uac00\uc694?\n    *   LLM\uc774 \uc5b4\ub5a4 \ud14d\uc2a4\ud2b8\uc801 \ud2b9\uc9d5(\uc608: \uae0d\uc815\uc801\uc778 \uac10\uc131 \ud45c\ud604, \ud2b9\uc815 \ub3d9\uc0ac \uc0ac\uc6a9, \ubb38\uc7a5 \uae38\uc774 \ub4f1)\uc744 \uae30\ubc18\uc73c\ub85c \ud2b9\uc815 BFI \ud2b9\uc131\uc744 \uc608\uce21\ud558\ub294\uc9c0, \uadf8 \uacfc\uc815\uc744 \uc5bc\ub9c8\ub098 \ud22c\uba85\ud558\uac8c \uc124\uba85\ud560 \uc218 \uc788\uc744\uae4c\uc694? \uc774\ub294 '\ube14\ub799\ubc15\uc2a4' \ubaa8\ub378\uc758 \ud574\uc11d \uac00\ub2a5\uc131\uc744 \ub192\uc774\ub294 \ub370 \uc911\uc694\ud569\ub2c8\ub2e4.\n\n*   **\uac1c\uc778\ud654\ub41c \ud398\ub974\uc18c\ub098 \uc0dd\uc131 ($ \\text{Personalized Persona Generation}$):**\n    *   \ub9cc\uc57d \ud2b9\uc815 \uc778\uac04\uc758 BFI \ud504\ub85c\ud30c\uc77c($ \\text{P_{human}}$)\uc774 \uc8fc\uc5b4\uc84c\uc744 \ub54c, LLM\uc774 \uc774 \ud504\ub85c\ud30c\uc77c\uacfc \uac70\uc758 \ub3d9\uc77c\ud55c \uc131\uaca9 \ud504\ub85c\ud30c\uc77c($ \\text{P_{LLM}}$)\uc744 \uac00\uc9c4 \ud14d\uc2a4\ud2b8\ub97c \uc0dd\uc131\ud558\ub3c4\ub85d \ud504\ub86c\ud504\ud2b8 \uc5d4\uc9c0\ub2c8\uc5b4\ub9c1 \ub610\ub294 \ud30c\uc778\ud29c\ub2dd\ud560 \uc218 \uc788\uc744\uae4c\uc694?\n    *   $$ \\text{Given } P_{\\text{human}}, \\text{ can we prompt/fine-tune LLM to generate text such that } P_{\\text{LLM}} \\approx P_{\\text{human}}? $$\n    *   \uc774\ub54c, LLM\uc758 \uc0dd\uc131 \ud14d\uc2a4\ud2b8\uac00 \ub2e8\uc21c\ud788 \uc131\uaca9 \ud14c\uc2a4\ud2b8 \ubb38\ud56d\uc5d0\ub9cc \uc798 \uc751\ub2f5\ud558\ub294 \uac83\uc744 \ub118\uc5b4, \uc790\uc720\ub85c\uc6b4 \ub300\ud654 \uc0c1\ud669\uc5d0\uc11c\ub3c4 \ud574\ub2f9 \uc131\uaca9 \ud2b9\uc131\uc744 \uc77c\uad00\ub418\uac8c \ubcf4\uc5ec\uc8fc\ub294\uc9c0 \uc5b4\ub5bb\uac8c \ud3c9\uac00\ud560 \uc218 \uc788\uc744\uae4c\uc694?\n\n*   **\ubb38\ud654\uc801/\uc5b8\uc5b4\uc801 \ucc28\uc774 ($ \\text{Cross-cultural and Cross-lingual Differences}$):**\n    *   Big Five \ubaa8\ub378\uc740 \ub2e4\uc591\ud55c \ubb38\ud654\uad8c\uc5d0\uc11c \uac80\uc99d\ub418\uc5c8\uc9c0\ub9cc(\uc774 \ub17c\ubb38\uc5d0\uc11c\ub3c4 McCrae et al., 2004 \ub4f1\uc744 \uc778\uc6a9), LLM\uc774 \ud6c8\ub828\ub41c \ub370\uc774\ud130\uc758 \ubb38\ud654\uc801 \ubc30\uacbd\uc774 BFI \uc2dc\ubbac\ub808\uc774\uc158\uc774\ub098 \uc608\uce21\uc5d0 \uc5b4\ub5a4 \uc601\ud5a5\uc744 \ubbf8\uce60\uae4c\uc694?\n    *   \ub2e4\ub978 \uc5b8\uc5b4\ub85c \ub41c LLM\uc774 \ub3d9\uc77c\ud55c BFI \ud14c\uc2a4\ud2b8\ub97c \ubc1b\uc558\uc744 \ub54c, \uc720\uc0ac\ud55c \uc131\uaca9 \ud504\ub85c\ud30c\uc77c\uc744 \ubcf4\uc77c\uae4c\uc694? \uc544\ub2c8\uba74 \uc5b8\uc5b4\uc640 \ubb38\ud654\uc801 \ub9e5\ub77d\uc5d0 \ub530\ub77c \ub2e4\ub978 \uacb0\uacfc\uac00 \ub098\ud0c0\ub0a0\uae4c\uc694?\n\n\uc774\ub7ec\ud55c \uc5f0\uad6c\ub4e4\uc740 LLM\uc774 \uc778\uac04\uc744 \uc774\ud574\ud558\uace0 \ubaa8\ubc29\ud558\ub294 \ub2a5\ub825\uc744 \uc2ec\ud654\uc2dc\ucf1c, \uc0c1\ub2f4, \uad50\uc721, \uc5d4\ud130\ud14c\uc778\uba3c\ud2b8 \ub4f1 \ub2e4\uc591\ud55c \ubd84\uc57c\uc5d0\uc11c \ub354\uc6b1 \uc815\uad50\ud558\uace0 \uac1c\uc778\ud654\ub41c AI \uc5d0\uc774\uc804\ud2b8\ub97c \uac1c\ubc1c\ud558\ub294 \ub370 \uacb0\uc815\uc801\uc778 \ud1b5\ucc30\uc744 \uc81c\uacf5\ud560 \uac83\uc785\ub2c8\ub2e4. \uc0ac\uc6a9\uc790\ub2d8\uc758 \uc9c8\ubb38\uc740 \uc815\ub9d0 \uc88b\uc740 \uc2dc\ubc1c\uc810\uc774\ub77c\uace0 \uc0dd\uac01\ud569\ub2c8\ub2e4!\n\n",
+    "frames": [
+        {
+            "frame_id": "0",
+            "start": 15,
+            "end": 17,
+            "entity_text": "ai",
+            "attr": {
+                "entity_type": "TECHNOLOGY"
+            }
+        },
+        {
+            "frame_id": "1",
+            "start": 142,
+            "end": 148,
+            "entity_text": "Llama2",
+            "attr": {
+                "entity_type": "MODEL"
+            }
+        },
+        {
+            "frame_id": "2",
+            "start": 150,
+            "end": 154,
+            "entity_text": "GPT4",
+            "attr": {
+                "entity_type": "MODEL"
+            }
+        },
+        {
+            "frame_id": "3",
+            "start": 156,
+            "end": 163,
+            "entity_text": "Mixtral",
+            "attr": {
+                "entity_type": "MODEL"
+            }
+        },
+        {
+            "frame_id": "4",
+            "start": 168,
+            "end": 171,
+            "entity_text": "LLM",
+            "attr": {
+                "entity_type": "MODEL"
+            }
+        },
+        {
+            "frame_id": "5",
+            "start": 244,
+            "end": 256,
+            "entity_text": "IPIP-NEO-120",
+            "attr": {
+                "entity_type": "OTHER"
+            }
+        },
+        {
+            "frame_id": "6",
+            "start": 761,
+            "end": 780,
+            "entity_text": "Jiang et al. (2023)",
+            "attr": {
+                "entity_type": "PERSON"
+            }
+        },
+        {
+            "frame_id": "0",
+            "start": 68,
+            "end": 71,
+            "entity_text": "LLM",
+            "attr": {
+                "entity_type": "PRODUCT"
+            }
+        },
+        {
+            "frame_id": "1",
+            "start": 241,
+            "end": 245,
+            "entity_text": "GPT4",
+            "attr": {
+                "entity_type": "PRODUCT"
+            }
+        },
+        {
+            "frame_id": "2",
+            "start": 270,
+            "end": 276,
+            "entity_text": "Llama2",
+            "attr": {
+                "entity_type": "PRODUCT"
+            }
+        },
+        {
+            "frame_id": "3",
+            "start": 315,
+            "end": 322,
+            "entity_text": "Mixtral",
+            "attr": {
+                "entity_type": "PRODUCT"
+            }
+        },
+        {
+            "frame_id": "0",
+            "start": 65,
+            "end": 76,
+            "entity_text": "\uc778\uac04-\ucef4\ud4e8\ud130 \uc0c1\ud638\uc791\uc6a9",
+            "attr": {
+                "entity_type": "FIELD"
+            }
+        },
+        {
+            "frame_id": "1",
+            "start": 78,
+            "end": 81,
+            "entity_text": "HCI",
+            "attr": {
+                "entity_type": "FIELD"
+            }
+        },
+        {
+            "frame_id": "2",
+            "start": 427,
+            "end": 433,
+            "entity_text": "\uba85\uc2dc\uc801 \uc9c0\uc2dc",
+            "attr": {
+                "entity_type": "METHODOLOGY"
+            }
+        },
+        {
+            "frame_id": "3",
+            "start": 535,
+            "end": 542,
+            "entity_text": "\ud398\ub974\uc18c\ub098 \uc124\uba85",
+            "attr": {
+                "entity_type": "METHODOLOGY"
+            }
+        },
+        {
+            "frame_id": "4",
+            "start": 660,
+            "end": 670,
+            "entity_text": "\uba87 \uac00\uc9c0 \uc608\uc2dc \ud559\uc2b5",
+            "attr": {
+                "entity_type": "METHODOLOGY"
+            }
+        },
+        {
+            "frame_id": "5",
+            "start": 835,
+            "end": 870,
+            "entity_text": "Fidelity and Consistency Assessment",
+            "attr": {
+                "entity_type": "TASK"
+            }
+        },
+        {
+            "frame_id": "6",
+            "start": 912,
+            "end": 924,
+            "entity_text": "IPIP-NEO-120",
+            "attr": {
+                "entity_type": "TOOL"
+            }
+        },
+        {
+            "frame_id": "0",
+            "start": 18,
+            "end": 30,
+            "entity_text": "IPIP-NEO-120",
+            "attr": {
+                "entity_type": "PRODUCT"
+            }
+        },
+        {
+            "frame_id": "1",
+            "start": 130,
+            "end": 133,
+            "entity_text": "LLM",
+            "attr": {
+                "entity_type": "ORGANIZATION"
+            }
+        },
+        {
+            "frame_id": "2",
+            "start": 130,
+            "end": 133,
+            "entity_text": "LLM",
+            "attr": {
+                "entity_type": "ORGANIZATION"
+            }
+        },
+        {
+            "frame_id": "3",
+            "start": 130,
+            "end": 133,
+            "entity_text": "LLM",
+            "attr": {
+                "entity_type": "ORGANIZATION"
+            }
+        },
+        {
+            "frame_id": "4",
+            "start": 130,
+            "end": 133,
+            "entity_text": "LLM",
+            "attr": {
+                "entity_type": "ORGANIZATION"
+            }
+        },
+        {
+            "frame_id": "5",
+            "start": 427,
+            "end": 438,
+            "entity_text": "Fine-tuning",
+            "attr": {
+                "entity_type": "PRODUCT"
+            }
+        },
+        {
+            "frame_id": "6",
+            "start": 453,
+            "end": 462,
+            "entity_text": "Prompting",
+            "attr": {
+                "entity_type": "PRODUCT"
+            }
+        },
+        {
+            "frame_id": "7",
+            "start": 727,
+            "end": 729,
+            "entity_text": "AI",
+            "attr": {
+                "entity_type": "ORGANIZATION"
+            }
+        },
+        {
+            "frame_id": "8",
+            "start": 815,
+            "end": 818,
+            "entity_text": "BFI",
+            "attr": {
+                "entity_type": "PRODUCT"
+            }
+        },
+        {
+            "frame_id": "9",
+            "start": 819,
+            "end": 837,
+            "entity_text": "Big Five Inventory",
+            "attr": {
+                "entity_type": "PRODUCT"
+            }
+        },
+        {
+            "frame_id": "10",
+            "start": 130,
+            "end": 133,
+            "entity_text": "LLM",
+            "attr": {
+                "entity_type": "ORGANIZATION"
+            }
+        },
+        {
+            "frame_id": "11",
+            "start": 130,
+            "end": 133,
+            "entity_text": "LLM",
+            "attr": {
+                "entity_type": "ORGANIZATION"
+            }
+        },
+        {
+            "frame_id": "0",
+            "start": 130,
+            "end": 138,
+            "entity_text": "Big Five",
+            "attr": {
+                "entity_type": "OTHER"
+            }
+        },
+        {
+            "frame_id": "1",
+            "start": 259,
+            "end": 296,
+            "entity_text": "\uacc4\uc0b0 \uc0ac\ud68c\uacfc\ud559(Computational Social Science)",
+            "attr": {
+                "entity_type": " \ubd84\uc57c"
+            }
+        },
+        {
+            "frame_id": "2",
+            "start": 303,
+            "end": 330,
+            "entity_text": "\ub514\uc9c0\ud138 \uc2ec\ub9ac\ud559(Digital Psychology)",
+            "attr": {
+                "entity_type": " \ubd84\uc57c"
+            }
+        },
+        {
+            "frame_id": "3",
+            "start": 345,
+            "end": 348,
+            "entity_text": "NLP",
+            "attr": {
+                "entity_type": "TECHNOLOGY"
+            }
+        },
+        {
+            "frame_id": "4",
+            "start": 358,
+            "end": 364,
+            "entity_text": "\uc18c\uc15c \ubbf8\ub514\uc5b4",
+            "attr": {
+                "entity_type": "PLATFORM"
+            }
+        },
+        {
+            "frame_id": "5",
+            "start": 370,
+            "end": 373,
+            "entity_text": "\uc5d0\uc138\uc774",
+            "attr": {
+                "entity_type": "TEXT"
+            }
+        },
+        {
+            "frame_id": "6",
+            "start": 375,
+            "end": 381,
+            "entity_text": "\uc628\ub77c\uc778 \ub300\ud654",
+            "attr": {
+                "entity_type": "TEXT"
+            }
+        },
+        {
+            "frame_id": "7",
+            "start": 2,
+            "end": 5,
+            "entity_text": "LLM",
+            "attr": {
+                "entity_type": "MODEL"
+            }
+        },
+        {
+            "frame_id": "8",
+            "start": 78,
+            "end": 81,
+            "entity_text": "BFI",
+            "attr": {
+                "entity_type": "OTHER"
+            }
+        },
+        {
+            "frame_id": "9",
+            "start": 664,
+            "end": 690,
+            "entity_text": "\ud14d\uc2a4\ud2b8 \ud2b9\uc9d5(\ub2e8\uc5b4 \uc0ac\uc6a9, \ubb38\uc7a5 \uad6c\uc870, \uac10\uc131 \ub4f1)",
+            "attr": {
+                "entity_type": "FEATURE"
+            }
+        },
+        {
+            "frame_id": "10",
+            "start": 692,
+            "end": 713,
+            "entity_text": "\uc2ec\ub9ac \uce21\uc815\ud559(psychometrics)",
+            "attr": {
+                "entity_type": " \ubd84\uc57c"
+            }
+        },
+        {
+            "frame_id": "11",
+            "start": 942,
+            "end": 970,
+            "entity_text": "Serapio-Garcia et al. (2023)",
+            "attr": {
+                "entity_type": "PERSON"
+            }
+        },
+        {
+            "frame_id": "12",
+            "start": 973,
+            "end": 985,
+            "entity_text": "Jiang et al.",
+            "attr": {
+                "entity_type": "PERSON"
+            }
+        },
+        {
+            "frame_id": "0",
+            "start": 57,
+            "end": 85,
+            "entity_text": "Serapio-Garcia et al. (2023)",
+            "attr": {
+                "entity_type": "PERSON"
+            }
+        },
+        {
+            "frame_id": "1",
+            "start": 88,
+            "end": 107,
+            "entity_text": "Jiang et al. (2023)",
+            "attr": {
+                "entity_type": "PERSON"
+            }
+        },
+        {
+            "frame_id": "2",
+            "start": 125,
+            "end": 133,
+            "entity_text": "Big Five",
+            "attr": {
+                "entity_type": "OTHER"
+            }
+        },
+        {
+            "frame_id": "3",
+            "start": 143,
+            "end": 146,
+            "entity_text": "\uc678\ud5a5\uc131",
+            "attr": {
+                "entity_type": "OTHER"
+            }
+        },
+        {
+            "frame_id": "4",
+            "start": 295,
+            "end": 297,
+            "entity_text": "\uc778\uac04",
+            "attr": {
+                "entity_type": "PERSON"
+            }
+        },
+        {
+            "frame_id": "5",
+            "start": 6,
+            "end": 9,
+            "entity_text": "BFI",
+            "attr": {
+                "entity_type": "OTHER"
+            }
+        },
+        {
+            "frame_id": "6",
+            "start": 492,
+            "end": 498,
+            "entity_text": "\uacc4\uc0b0 \uc2ec\ub9ac\ud559",
+            "attr": {
+                "entity_type": "OTHER"
+            }
+        },
+        {
+            "frame_id": "7",
+            "start": 500,
+            "end": 510,
+            "entity_text": "AI \ud398\ub974\uc18c\ub098 \uc5f0\uad6c",
+            "attr": {
+                "entity_type": "OTHER"
+            }
+        },
+        {
+            "frame_id": "8",
+            "start": 6,
+            "end": 9,
+            "entity_text": "BFI",
+            "attr": {
+                "entity_type": "OTHER"
+            }
+        },
+        {
+            "frame_id": "9",
+            "start": 653,
+            "end": 703,
+            "entity_text": "Reliability and Interpretability of BFI Prediction",
+            "attr": {
+                "entity_type": "OTHER"
+            }
+        },
+        {
+            "frame_id": "0",
+            "start": 22,
+            "end": 25,
+            "entity_text": "BFI",
+            "attr": {
+                "entity_type": "OTHER"
+            }
+        },
+        {
+            "frame_id": "1",
+            "start": 68,
+            "end": 72,
+            "entity_text": "\ube14\ub799\ubc15\uc2a4",
+            "attr": {
+                "entity_type": "OTHER"
+            }
+        },
+        {
+            "frame_id": "2",
+            "start": 106,
+            "end": 118,
+            "entity_text": "\uac1c\uc778\ud654\ub41c \ud398\ub974\uc18c\ub098 \uc0dd\uc131",
+            "attr": {
+                "entity_type": "OTHER"
+            }
+        },
+        {
+            "frame_id": "3",
+            "start": 128,
+            "end": 159,
+            "entity_text": "Personalized Persona Generation",
+            "attr": {
+                "entity_type": "OTHER"
+            }
+        },
+        {
+            "frame_id": "4",
+            "start": 22,
+            "end": 25,
+            "entity_text": "BFI",
+            "attr": {
+                "entity_type": "OTHER"
+            }
+        },
+        {
+            "frame_id": "5",
+            "start": 223,
+            "end": 226,
+            "entity_text": "LLM",
+            "attr": {
+                "entity_type": "ORGANIZATION"
+            }
+        },
+        {
+            "frame_id": "6",
+            "start": 285,
+            "end": 295,
+            "entity_text": "\ud504\ub86c\ud504\ud2b8 \uc5d4\uc9c0\ub2c8\uc5b4\ub9c1",
+            "attr": {
+                "entity_type": "OTHER"
+            }
+        },
+        {
+            "frame_id": "7",
+            "start": 299,
+            "end": 303,
+            "entity_text": "\ud30c\uc778\ud29c\ub2dd",
+            "attr": {
+                "entity_type": "OTHER"
+            }
+        },
+        {
+            "frame_id": "8",
+            "start": 223,
+            "end": 226,
+            "entity_text": "LLM",
+            "attr": {
+                "entity_type": "ORGANIZATION"
+            }
+        },
+        {
+            "frame_id": "9",
+            "start": 577,
+            "end": 587,
+            "entity_text": "\ubb38\ud654\uc801/\uc5b8\uc5b4\uc801 \ucc28\uc774",
+            "attr": {
+                "entity_type": "OTHER"
+            }
+        },
+        {
+            "frame_id": "10",
+            "start": 597,
+            "end": 641,
+            "entity_text": "Cross-cultural and Cross-lingual Differences",
+            "attr": {
+                "entity_type": "OTHER"
+            }
+        },
+        {
+            "frame_id": "11",
+            "start": 656,
+            "end": 667,
+            "entity_text": "Big Five \ubaa8\ub378",
+            "attr": {
+                "entity_type": "OTHER"
+            }
+        },
+        {
+            "frame_id": "12",
+            "start": 694,
+            "end": 713,
+            "entity_text": "McCrae et al., 2004",
+            "attr": {
+                "entity_type": "PERSON"
+            }
+        },
+        {
+            "frame_id": "13",
+            "start": 223,
+            "end": 226,
+            "entity_text": "LLM",
+            "attr": {
+                "entity_type": "ORGANIZATION"
+            }
+        },
+        {
+            "frame_id": "14",
+            "start": 22,
+            "end": 25,
+            "entity_text": "BFI",
+            "attr": {
+                "entity_type": "OTHER"
+            }
+        },
+        {
+            "frame_id": "15",
+            "start": 223,
+            "end": 226,
+            "entity_text": "LLM",
+            "attr": {
+                "entity_type": "ORGANIZATION"
+            }
+        },
+        {
+            "frame_id": "16",
+            "start": 945,
+            "end": 952,
+            "entity_text": "AI \uc5d0\uc774\uc804\ud2b8",
+            "attr": {
+                "entity_type": "OTHER"
+            }
+        },
+        {
+            "frame_id": "0",
+            "start": 3,
+            "end": 5,
+            "entity_text": "\uc778\uac04",
+            "attr": {
+                "entity_type": "PERSON"
+            }
+        },
+        {
+            "frame_id": "1",
+            "start": 27,
+            "end": 29,
+            "entity_text": "\uc0c1\ub2f4",
+            "attr": {
+                "entity_type": "ACTIVITY"
+            }
+        },
+        {
+            "frame_id": "2",
+            "start": 31,
+            "end": 33,
+            "entity_text": "\uad50\uc721",
+            "attr": {
+                "entity_type": "ACTIVITY"
+            }
+        },
+        {
+            "frame_id": "3",
+            "start": 35,
+            "end": 41,
+            "entity_text": "\uc5d4\ud130\ud14c\uc778\uba3c\ud2b8",
+            "attr": {
+                "entity_type": "ACTIVITY"
+            }
+        },
+        {
+            "frame_id": "4",
+            "start": 66,
+            "end": 73,
+            "entity_text": "AI \uc5d0\uc774\uc804\ud2b8",
+            "attr": {
+                "entity_type": "ORGANIZATION"
+            }
+        }
+    ],
+    "relations": []
+}
