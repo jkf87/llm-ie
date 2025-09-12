@@ -121,11 +121,11 @@ class KnowledgeGraphGenerator:
                             'attributes': frame.get('attr', {})
                         })
                     
-                    # 엔티티 해결 실행
+                    # 엔티티 해결 실행 (더 엄격한 설정)
                     resolution_result = resolution_agent.resolve_entities(
                         entities_for_resolution,
                         resolution_config={
-                            'similarity_threshold': 0.8,
+                            'similarity_threshold': 0.95,  # 더 엄격한 임계값
                             'use_fuzzy_matching': True,
                             'use_semantic_similarity': False,  # LLM 엔진 없음
                             'merge_strategy': 'keep_first'

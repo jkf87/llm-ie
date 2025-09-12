@@ -177,10 +177,33 @@ document.addEventListener('DOMContentLoaded', () => {
         createRelationBtn.addEventListener('click', createManualRelation);
     }
     
+    // 모달 폼에서 Enter 키 처리
+    const manualRelationForm = document.getElementById('manualRelationForm');
+    if (manualRelationForm) {
+        manualRelationForm.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                createManualRelation();
+            }
+        });
+    }
+    
     if (relationConfidenceSlider && confidenceValueSpan) {
         relationConfidenceSlider.addEventListener('input', (e) => {
             confidenceValueSpan.textContent = e.target.value;
         });
+    }
+    
+    // 노드 선택 드롭다운 이벤트 리스너
+    const sourceNodeSelect = document.getElementById('sourceNodeSelect');
+    const targetNodeSelect = document.getElementById('targetNodeSelect');
+    
+    if (sourceNodeSelect) {
+        sourceNodeSelect.addEventListener('change', updateRelationPreview);
+    }
+    
+    if (targetNodeSelect) {
+        targetNodeSelect.addEventListener('change', updateRelationPreview);
     }
     
     // 관계 추출 컨텍스트 필드들
@@ -804,13 +827,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 수동 관계 생성 함수들
     function toggleManualRelationMode() {
-        manualRelationMode = !manualRelationMode;
-        
-        if (manualRelationMode) {
-            enterManualRelationMode();
-        } else {
-            exitManualRelationMode();
-        }
+        // 직접 모달 표시
+        showManualRelationModal();
     }
     
     function enterManualRelationMode() {
@@ -884,53 +902,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function handleNodeClick(params) {
-        if (!manualRelationMode || !params.nodes || params.nodes.length === 0) {
-            return;
-        }
-        
-        const clickedNodeId = params.nodes[0];
-        const isCtrlPressed = params.event.srcEvent && params.event.srcEvent.ctrlKey;
-        
-        if (selectedNodes.length === 0) {
-            // 첫 번째 노드 선택
-            selectedNodes.push(clickedNodeId);
-            console.log('First node selected:', clickedNodeId);
-        } else if (selectedNodes.length === 1 && isCtrlPressed) {
-            // 두 번째 노드 선택 (Ctrl+클릭)
-            if (selectedNodes[0] !== clickedNodeId) {
-                selectedNodes.push(clickedNodeId);
-                console.log('Second node selected:', clickedNodeId);
-                
-                // 두 노드가 선택되었으므로 관계 생성 모달 표시
-                showManualRelationModal();
-            }
-        } else if (!isCtrlPressed) {
-            // Ctrl 없이 클릭하면 새로운 첫 번째 노드로 설정
-            selectedNodes = [clickedNodeId];
-            console.log('New first node selected:', clickedNodeId);
-        }
-        
-        updateNodeSelectionDisplay();
+        // 노드 클릭 시 특별한 동작이 필요한 경우 여기에 추가
+        return;
     }
     
     function showManualRelationModal() {
-        if (selectedNodes.length !== 2) return;
+        // 노드 선택 드롭다운 채우기
+        populateNodeSelects();
         
-        const sourceNode = networkNodes ? networkNodes.get(selectedNodes[0]) : null;
-        const targetNode = networkNodes ? networkNodes.get(selectedNodes[1]) : null;
-        
-        if (!sourceNode || !targetNode) return;
-        
-        // 모달 내용 업데이트
-        const sourceNodePreview = document.getElementById('sourceNodePreview');
-        const targetNodePreview = document.getElementById('targetNodePreview');
-        
-        if (sourceNodePreview) {
-            sourceNodePreview.textContent = sourceNode.label;
+        // 기존 선택된 노드가 있다면 드롭다운에 설정
+        if (selectedNodes.length >= 1) {
+            const sourceSelect = document.getElementById('sourceNodeSelect');
+            if (sourceSelect) sourceSelect.value = selectedNodes[0];
         }
-        
-        if (targetNodePreview) {
-            targetNodePreview.textContent = targetNode.label;
+        if (selectedNodes.length >= 2) {
+            const targetSelect = document.getElementById('targetNodeSelect');
+            if (targetSelect) targetSelect.value = selectedNodes[1];
+            updateRelationPreview();
         }
         
         // 폼 초기화
@@ -949,6 +937,72 @@ document.addEventListener('DOMContentLoaded', () => {
         // 모달 표시
         const modal = new bootstrap.Modal(document.getElementById('manualRelationModal'));
         modal.show();
+        
+        // 모달이 완전히 표시된 후 첫 번째 드롭다운에 포커스
+        document.getElementById('manualRelationModal').addEventListener('shown.bs.modal', function () {
+            const sourceSelect = document.getElementById('sourceNodeSelect');
+            if (sourceSelect && !sourceSelect.value) {
+                sourceSelect.focus();
+            } else {
+                const relationLabel = document.getElementById('relationLabel');
+                if (relationLabel) {
+                    relationLabel.focus();
+                }
+            }
+        }, { once: true });
+    }
+    
+    function populateNodeSelects() {
+        const sourceSelect = document.getElementById('sourceNodeSelect');
+        const targetSelect = document.getElementById('targetNodeSelect');
+        
+        if (!sourceSelect || !targetSelect || !networkNodes) return;
+        
+        // 기존 옵션 제거 (첫 번째 placeholder 옵션 제외)
+        sourceSelect.innerHTML = '<option value="">시작 노드를 선택하세요</option>';
+        targetSelect.innerHTML = '<option value="">대상 노드를 선택하세요</option>';
+        
+        // 모든 노드를 드롭다운에 추가
+        networkNodes.forEach((node, nodeId) => {
+            const option1 = new Option(node.label, nodeId);
+            const option2 = new Option(node.label, nodeId);
+            sourceSelect.appendChild(option1);
+            targetSelect.appendChild(option2);
+        });
+    }
+    
+    function updateRelationPreview() {
+        const sourceSelect = document.getElementById('sourceNodeSelect');
+        const targetSelect = document.getElementById('targetNodeSelect');
+        const relationPreview = document.getElementById('relationPreview');
+        
+        if (!sourceSelect || !targetSelect || !relationPreview) return;
+        
+        const sourceNodeId = sourceSelect.value;
+        const targetNodeId = targetSelect.value;
+        
+        if (sourceNodeId && targetNodeId && sourceNodeId !== targetNodeId) {
+            const sourceNode = networkNodes ? networkNodes.get(sourceNodeId) : null;
+            const targetNode = networkNodes ? networkNodes.get(targetNodeId) : null;
+            
+            if (sourceNode && targetNode) {
+                // 미리보기 업데이트
+                const sourceNodePreview = document.getElementById('sourceNodePreview');
+                const targetNodePreview = document.getElementById('targetNodePreview');
+                
+                if (sourceNodePreview) sourceNodePreview.textContent = sourceNode.label;
+                if (targetNodePreview) targetNodePreview.textContent = targetNode.label;
+                
+                relationPreview.style.display = 'block';
+                
+                // selectedNodes 업데이트 (기존 로직과 호환성 위해)
+                selectedNodes = [sourceNodeId, targetNodeId];
+            } else {
+                relationPreview.style.display = 'none';
+            }
+        } else {
+            relationPreview.style.display = 'none';
+        }
     }
     
     async function createManualRelation() {

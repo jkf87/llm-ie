@@ -253,22 +253,6 @@
                 </button>
             </div>
             
-            <!-- 수동 관계 생성 제어판 (처음에는 숨김) -->
-            <div class="manual-relation-controls" id="manualRelationControls" style="display: none;">
-                <h6>🔗 관계 생성 모드</h6>
-                <div class="manual-relation-instructions">
-                    1. 첫 번째 노드를 클릭하세요<br>
-                    2. Ctrl 키를 누르고 두 번째 노드를 클릭하세요<br>
-                    3. 관계 정보를 입력하세요
-                </div>
-                <div class="selected-nodes" id="selectedNodes">
-                    <div>선택된 노드: <span id="selectedNodesList">없음</span></div>
-                </div>
-                <div class="d-flex gap-2 mt-2">
-                    <button type="button" class="btn btn-sm btn-secondary" id="cancelManualRelation">취소</button>
-                    <button type="button" class="btn btn-sm btn-danger" id="clearSelection">선택 초기화</button>
-                </div>
-            </div>
             <div id="kg-visualization" class="network-container"></div>
         </div>
 
@@ -808,7 +792,28 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="relation-preview">
+                <!-- 노드 선택 섹션 -->
+                <div class="node-selection-section" id="nodeSelectionSection">
+                    <h6 class="mb-3">1️⃣ 노드 선택</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="sourceNodeSelect" class="form-label">시작 노드 *</label>
+                            <select class="form-select" id="sourceNodeSelect" required>
+                                <option value="">시작 노드를 선택하세요</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="targetNodeSelect" class="form-label">대상 노드 *</label>
+                            <select class="form-select" id="targetNodeSelect" required>
+                                <option value="">대상 노드를 선택하세요</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 관계 미리보기 -->
+                <div class="relation-preview" id="relationPreview" style="display: none;">
+                    <h6 class="mb-3">2️⃣ 관계 정보</h6>
                     <div class="d-flex align-items-center justify-content-center mb-3">
                         <span class="node-preview" id="sourceNodePreview">시작 노드</span>
                         <span class="relation-arrow">→</span>

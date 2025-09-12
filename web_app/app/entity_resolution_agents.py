@@ -66,8 +66,8 @@ class ExactMatchCalculator(SimilarityCalculator):
     """정확한 텍스트 매칭 계산기"""
     
     def calculate_similarity(self, entity1: Dict, entity2: Dict) -> float:
-        text1 = self._normalize_text(entity1.get('entity_text', ''))
-        text2 = self._normalize_text(entity2.get('entity_text', ''))
+        text1 = self._normalize_text(entity1.get('text', entity1.get('entity_text', '')))
+        text2 = self._normalize_text(entity2.get('text', entity2.get('entity_text', '')))
         
         if text1 == text2:
             return 1.0
@@ -91,15 +91,15 @@ class FuzzyMatchCalculator(SimilarityCalculator):
         self.threshold = threshold
     
     def calculate_similarity(self, entity1: Dict, entity2: Dict) -> float:
-        text1 = entity1.get('entity_text', '').lower().strip()
-        text2 = entity2.get('entity_text', '').lower().strip()
+        text1 = entity1.get('text', entity1.get('entity_text', '')).lower().strip()
+        text2 = entity2.get('text', entity2.get('entity_text', '')).lower().strip()
         
         # SequenceMatcher를 사용한 유사도 계산
         similarity = difflib.SequenceMatcher(None, text1, text2).ratio()
         
         # 타입이 다르면 패널티 적용
-        type1 = entity1.get('attr', {}).get('entity_type', '')
-        type2 = entity2.get('attr', {}).get('entity_type', '')
+        type1 = entity1.get('type', entity1.get('attr', {}).get('entity_type', ''))
+        type2 = entity2.get('type', entity2.get('attr', {}).get('entity_type', ''))
         
         if type1 != type2 and type1 and type2:
             similarity *= 0.7  # 타입 불일치 패널티
@@ -121,10 +121,10 @@ class SemanticSimilarityCalculator(SimilarityCalculator):
             return 0.0
         
         try:
-            text1 = entity1.get('entity_text', '')
-            text2 = entity2.get('entity_text', '')
-            type1 = entity1.get('attr', {}).get('entity_type', '')
-            type2 = entity2.get('attr', {}).get('entity_type', '')
+            text1 = entity1.get('text', entity1.get('entity_text', ''))
+            text2 = entity2.get('text', entity2.get('entity_text', ''))
+            type1 = entity1.get('type', entity1.get('attr', {}).get('entity_type', ''))
+            type2 = entity2.get('type', entity2.get('attr', {}).get('entity_type', ''))
             
             prompt = f"""
 두 엔티티가 같은 개념을 나타내는지 평가해주세요.
@@ -164,9 +164,9 @@ class SemanticSimilarityCalculator(SimilarityCalculator):
 class EntityMatcher:
     """엔티티 매칭 담당 클래스 (Single Responsibility Principle)"""
     
-    def __init__(self, similarity_calculators: List[SimilarityCalculator]):
+    def __init__(self, similarity_calculators: List[SimilarityCalculator], match_threshold: float = 0.95):
         self.similarity_calculators = similarity_calculators
-        self.match_threshold = 0.85
+        self.match_threshold = match_threshold
         
     def find_matches(self, entities: List[Dict]) -> List[EntityMatch]:
         """엔티티들 간 매칭 찾기"""
@@ -203,8 +203,8 @@ class EntityMatcher:
             reasoning = f"Best match via {best_method.value} ({', '.join(reasoning_parts)})"
             
             return EntityMatch(
-                entity1_id=entity1.get('frame_id'),
-                entity2_id=entity2.get('frame_id'),
+                entity1_id=entity1.get('id', entity1.get('frame_id')),
+                entity2_id=entity2.get('id', entity2.get('frame_id')),
                 similarity_score=best_score,
                 similarity_method=best_method,
                 confidence=confidence,
@@ -236,8 +236,8 @@ class EntityMerger:
                 
                 merged_entity = MergedEntity(
                     merged_id=entity_id,
-                    canonical_text=entity.get('entity_text', ''),
-                    entity_type=entity.get('attr', {}).get('entity_type', ''),
+                    canonical_text=entity.get('text', entity.get('entity_text', '')),
+                    entity_type=entity.get('type', entity.get('attr', {}).get('entity_type', '')),
                     source_entities=[entity_id],
                     confidence=1.0,
                     merge_reasoning="Single entity - no merge needed"
@@ -262,7 +262,7 @@ class EntityMerger:
         
         # 모든 엔티티를 개별 그룹으로 초기화
         for entity in entities:
-            entity_id = entity.get('frame_id')
+            entity_id = entity.get('id', entity.get('frame_id'))
             parent[entity_id] = entity_id
         
         def find(x):
@@ -282,7 +282,7 @@ class EntityMerger:
         # 그룹별로 엔티티 수집
         groups = {}
         for entity in entities:
-            entity_id = entity.get('frame_id')
+            entity_id = entity.get('id', entity.get('frame_id'))
             root = find(entity_id)
             if root not in groups:
                 groups[root] = set()
@@ -293,7 +293,7 @@ class EntityMerger:
     def _find_entity_by_id(self, entities: List[Dict], entity_id: str) -> Dict:
         """ID로 엔티티 찾기"""
         for entity in entities:
-            if entity.get('frame_id') == entity_id:
+            if entity.get('id', entity.get('frame_id')) == entity_id:
                 return entity
         return {}
     
@@ -309,10 +309,10 @@ class EntityMerger:
         entity_type = self._determine_common_type(entities)
         
         # 소스 엔티티 ID 수집
-        source_entities = [e.get('frame_id') for e in entities]
+        source_entities = [e.get('id', e.get('frame_id')) for e in entities]
         
         # 병합 추론 생성
-        entity_texts = [e.get('entity_text', '') for e in entities]
+        entity_texts = [e.get('text', e.get('entity_text', '')) for e in entities]
         merge_reasoning = f"Merged {len(entities)} entities: {', '.join(entity_texts)}"
         
         # 신뢰도 계산 (엔티티 수가 많을수록 약간 낮아짐)
@@ -334,12 +334,12 @@ class EntityMerger:
         
         # 간단한 휴리스틱: 가장 긴 텍스트 선택
         # 추후 LLM 기반 선택으로 개선 가능
-        canonical = max(entities, key=lambda e: len(e.get('entity_text', '')))
-        return canonical.get('entity_text', '')
+        canonical = max(entities, key=lambda e: len(e.get('text', e.get('entity_text', ''))))
+        return canonical.get('text', canonical.get('entity_text', ''))
     
     def _determine_common_type(self, entities: List[Dict]) -> str:
         """공통 타입 결정"""
-        types = [e.get('attr', {}).get('entity_type', '') for e in entities]
+        types = [e.get('type', e.get('attr', {}).get('entity_type', '')) for e in entities]
         types = [t for t in types if t]  # 빈 타입 제외
         
         if not types:
@@ -384,7 +384,7 @@ class EntityResolutionAgent:
             self.similarity_calculators.append(SemanticSimilarityCalculator(llm_engine))
         
         # 의존성 주입 (Dependency Injection)
-        self.matcher = EntityMatcher(self.similarity_calculators)
+        self.matcher = EntityMatcher(self.similarity_calculators, match_threshold=0.95)
         self.merger = EntityMerger(llm_engine)
     
     def resolve_entities(self, entities: List[Dict], 
@@ -402,7 +402,11 @@ class EntityResolutionAgent:
         try:
             config = resolution_config or {}
             
-            logger.info(f"Starting entity resolution for {len(entities)} entities")
+            # 설정에 따라 임계값 조정
+            similarity_threshold = config.get('similarity_threshold', 0.95)
+            self.matcher.match_threshold = similarity_threshold
+            
+            logger.info(f"Starting entity resolution for {len(entities)} entities with threshold {similarity_threshold}")
             
             # 1. 엔티티 매칭
             matches = self.matcher.find_matches(entities)

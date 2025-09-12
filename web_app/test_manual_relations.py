@@ -121,7 +121,7 @@ def main():
         print("2. Generate a knowledge graph from your data")
         print("3. Click '🔗 수동 관계 생성' button")
         print("4. Click on the first node")
-        print("5. Hold Ctrl and click on the second node") 
+        print("5. Hold Shift and click on the second node") 
         print("6. Fill in the relationship form")
         print("7. Click '관계 생성' to add the relationship")
     else:
